@@ -1,0 +1,55 @@
+# 소스 리스트 (REFERENCE.md §1)
+# tier: primary(느슨하게) / trade(표준) / broad(엄격하게)
+# 특정 소스만 threshold를 다르게 주고 싶으면 해당 항목에 `threshold: N` 추가 (tier 기본값보다 우선)
+
+sources:
+  # --- primary: 공식 1차 출처 ---
+  - name: Google Search Central Blog
+    feed_url: https://developers.google.com/search/blog/feed.xml
+    tier: primary
+
+  - name: Google Search Product Blog
+    feed_url: https://blog.google/products/search/rss/
+    tier: primary
+
+  # --- trade: SEO 전문 매체 ---
+  - name: Search Engine Land
+    feed_url: https://searchengineland.com/feed
+    tier: trade
+
+  - name: Search Engine Journal
+    feed_url: https://www.searchenginejournal.com/feed/
+    tier: trade
+
+  - name: Search Engine Roundtable
+    feed_url: https://feeds.feedburner.com/SearchEngineRoundtable1
+    tier: trade
+
+  - name: Ahrefs Blog
+    feed_url: https://ahrefs.com/blog/feed/
+    tier: trade
+
+  - name: Moz Blog
+    feed_url: https://moz.com/posts/rss/blog
+    tier: trade
+
+  - name: Semrush Blog
+    feed_url: https://www.semrush.com/blog/feed/
+    tier: trade
+
+  - name: Search Engine Watch
+    feed_url: https://www.searchenginewatch.com/feed/
+    tier: trade
+
+  # --- broad: 노이즈 많은 광역 ---
+  - name: OpenAI News
+    feed_url: https://openai.com/news/rss.xml
+    tier: broad
+
+  - name: Reddit r/SEO
+    feed_url: https://www.reddit.com/r/SEO/.rss
+    tier: broad
+
+  - name: SparkToro
+    feed_url: https://sparktoro.com/blog/feed/
+    tier: broad

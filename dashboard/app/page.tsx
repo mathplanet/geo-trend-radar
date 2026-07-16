@@ -10,7 +10,7 @@ export default async function HomePage() {
 
   if (!digest) {
     return (
-      <p className="text-neutral-500">
+      <p className="text-neutral-500 dark:text-neutral-400">
         아직 발행된 다이제스트가 없습니다. 첫 주간 배치가 실행되면 여기에
         표시됩니다.
       </p>
@@ -21,10 +21,10 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-10">
-      <DigestView digest={digest} />
+      <DigestView digest={digest} isLatest />
       {pastWeeks.length > 0 && (
-        <section className="border-t border-neutral-200 pt-6">
-          <h2 className="text-sm font-semibold text-neutral-500">
+        <section className="border-t border-neutral-200 pt-6 dark:border-neutral-800">
+          <h2 className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">
             지난 주차 아카이브
           </h2>
           <ul className="mt-2 flex flex-wrap gap-2">
@@ -32,7 +32,7 @@ export default async function HomePage() {
               <li key={week}>
                 <Link
                   href={`/${week}`}
-                  className="rounded border border-neutral-300 px-3 py-1 text-sm text-neutral-700 hover:bg-neutral-100"
+                  className="rounded border border-neutral-300 px-3 py-1 text-sm text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
                 >
                   {week}
                 </Link>

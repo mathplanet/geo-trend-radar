@@ -58,12 +58,13 @@ def update_item_summary(item_id, summary, cluster, insight, relevant):
     }).eq("id", item_id).execute()
 
 
-def insert_digest(week, headline_item_ids, overview):
-    get_client().table("digests").insert({
+def upsert_digest(week, headline_item_ids, overview):
+    """week UNIQUE 제약 기반 upsert. 같은 주에 여러 번 실행돼도 digests에 중복 행이 쌓이지 않는다."""
+    get_client().table("digests").upsert({
         "week": week,
         "headline_items": headline_item_ids,
         "overview": overview,
-    }).execute()
+    }, on_conflict="week").execute()
 
 
 def within_window(item, days):

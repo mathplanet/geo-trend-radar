@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 
 import anthropic
 
-from store import fetch_all_items, insert_digest, update_item_summary, within_window
+from store import fetch_all_items, upsert_digest, update_item_summary, within_window
 
 PER_ITEM_MODEL = "claude-haiku-4-5-20251001"
 DIGEST_MODEL = "claude-sonnet-5"
@@ -124,7 +124,7 @@ def main():
     week_label = datetime.now(timezone.utc).strftime("%G-W%V")
     headline_ids = digest.get("headline_ids", [])
     overview = digest.get("overview")
-    insert_digest(week_label, headline_ids, overview)
+    upsert_digest(week_label, headline_ids, overview)
 
     by_id = {item["id"]: item for item in items}
     print(f"\n=== {week_label} 다이제스트 ===")

@@ -62,48 +62,181 @@ RSS가 없거나 접근 차단되어 v1 제외. v2에서 `type: crawl`로 붙일
 - 유효 threshold 해석 우선순위: **출처별 override > 등급 기본값 > 전역 default(3)**.
 - 특정 출처만 예외를 두려면 `sources.yaml`의 해당 항목에 `threshold: N` 추가.
 
-## 4. 키워드 + 가중치 전체 리스트
+## 4. 키워드 + 가중치 + 그룹 전체 리스트
 
-GEO 핵심은 고가중치, SEO 일반은 중·저가중치. (`keywords.yaml` 원본과 동일)
+`keywords.yaml` 원본과 동일. 각 키워드는 **가중치**(채택 여부를 정하는 `relevance_score` 계산에 사용)와
+**그룹**(대시보드 탭 구분에 사용, `§4.1` 참고) 두 축을 모두 가진다.
 
-### GEO 핵심
+### 4.1 그룹(category) 12개 — multi-tag
+
+채택 여부(threshold 통과)는 기존처럼 **가중치 합산**으로 정하지만, 그룹 배정은 가중치와 무관하게
+**매칭된 키워드가 속한 그룹을 전부 태그**한다. 즉 한 글이 여러 그룹(대시보드 탭)에 동시에 속할 수 있다.
+
+| 그룹 key | 라벨 | 성격 |
+|-----------|------|------|
+| `ai_platform` | AI 검색 플랫폼 | 플랫폼별 신규 기능·발표 (ChatGPT, Perplexity, Gemini, AI Mode 등) |
+| `geo_strategy` | GEO/AEO 최적화 전략 | "어떻게 최적화하는가" 상위 전략·개념 |
+| `measurement_tools` | 측정·모니터링 도구 | GEO 성과를 어떻게 측정/추적하는가 |
+| `traditional_seo` | 전통 SEO·검색엔진 | 기존 SEO 생태계, 구글 알고리즘 업데이트 |
+| `market_impact` | 시장·비즈니스 임팩트 | 트래픽/광고/매출에 미치는 영향 |
+| `structured_markup` | 구조화 데이터/마크업 | 스키마·마크업 등 구조화 신호 |
+| `content_extractability` | 콘텐츠 구조/추출성 | AI가 답변을 뽑아내기 쉬운 콘텐츠 구조 |
+| `entity_semantic` | 엔티티/시맨틱 | 엔티티 기반 SEO, 지식 그래프 |
+| `citability` | 인용/검색가능성 | AI 답변에 인용되기 위한 검색·추출 가능성 |
+| `ai_crawler_access` | AI 크롤러 접근성 | GPTBot 등 AI 크롤러의 접근 허용/차단 |
+| `trust_quality` | 신뢰·품질 신호 | E-E-A-T 등 신뢰도 신호 |
+| `rendering_access` | 렌더링·기술 접근성 | JS 렌더링 등 AI 크롤러의 기술적 접근성 |
+
+`structured_markup`/`citability`는 원래 `traditional_seo`/`geo_strategy`에 있던
+`structured data`/`schema markup`/`citation`/`cited by ai`/`retrieval augmented generation`을
+더 구체적인 그룹으로 이동시켜 흡수한 것 (겹치는 키워드는 병합, 겹치지 않는 나머지는 그대로 구별).
+
+### 4.2 AI 검색 플랫폼 (`ai_platform`)
+| 키워드 | 가중치 |
+|--------|--------|
+| ai overview | 4 |
+| ai overviews | 4 |
+| ai mode | 4 |
+| chatgpt search | 4 |
+| perplexity | 3 |
+| google gemini | 2 |
+
+### 4.3 GEO/AEO 최적화 전략 (`geo_strategy`)
 | 키워드 | 가중치 |
 |--------|--------|
 | generative engine optimization | 5 |
 | answer engine optimization | 5 |
 | llm seo | 5 |
-| ai overview | 4 |
-| ai overviews | 4 |
 | ai search | 4 |
-| ai mode | 4 |
-| chatgpt search | 4 |
-| cited by ai | 4 |
 | geo | 3 |
-| perplexity | 3 |
-| google gemini | 2 |
-| citation | 2 |
+| agentic optimization | 3 |
 
-### SEO 일반
+### 4.4 측정·모니터링 도구 (`measurement_tools`)
+| 키워드 | 가중치 |
+|--------|--------|
+| ai visibility | 3 |
+| share of voice | 3 |
+| geo tool | 3 |
+| prompt monitoring | 2 |
+| ai search tracking | 2 |
+
+### 4.5 전통 SEO·검색엔진 (`traditional_seo`)
 | 키워드 | 가중치 |
 |--------|--------|
 | core update | 4 |
-| google search | 3 |
 | serp | 3 |
 | algorithm update | 3 |
 | featured snippet | 3 |
-| seo | 2 |
 | search engine | 2 |
+| seo | 2 |
 | ranking | 2 |
 | organic traffic | 2 |
+| google search | 3 |
+
+### 4.6 시장·비즈니스 임팩트 (`market_impact`)
+| 키워드 | 가중치 |
+|--------|--------|
+| ai ads | 3 |
+| zero click | 3 |
+| ad revenue | 2 |
+| traffic decline | 2 |
+| click through rate | 2 |
+
+### 4.7 구조화 데이터/마크업 (`structured_markup`)
+| 키워드 | 가중치 |
+|--------|--------|
 | structured data | 2 |
 | schema markup | 2 |
+| schema.org | 3 |
+| json-ld | 3 |
+| rich results | 3 |
+| rich result | 3 |
+| rich snippet | 3 |
+| faq schema | 3 |
+| howto schema | 3 |
+| semantic html | 3 |
+| entity markup | 3 |
 
-> **튜닝 메모**: `google search`(가중치 3)는 소비자성 구글 글까지 잡는 경향이 있음.
-> primary 소스에서 노이즈가 보이면 이 키워드 가중치를 2로 낮추는 것을 우선 고려.
+### 4.8 콘텐츠 구조/추출성 (`content_extractability`)
+| 키워드 | 가중치 |
+|--------|--------|
+| content structure | 2 |
+| heading structure | 2 |
+| header hierarchy | 3 |
+| direct answer | 3 |
+| answer format | 3 |
+| passage ranking | 4 |
+| content chunk | 3 |
+| chunking | 3 |
+| skimmable | 3 |
+| scannable | 3 |
+| tl;dr | 2 |
+
+### 4.9 엔티티/시맨틱 (`entity_semantic`)
+| 키워드 | 가중치 |
+|--------|--------|
+| entity seo | 4 |
+| entity-based | 3 |
+| named entity | 3 |
+| knowledge graph | 3 |
+| topical authority | 3 |
+| topic cluster | 3 |
+| semantic search | 3 |
+| disambiguation | 3 |
+
+### 4.10 인용/검색가능성 (`citability`)
+| 키워드 | 가중치 |
+|--------|--------|
+| citation | 2 |
+| cited by ai | 4 |
+| retrievability | 4 |
+| retrieval augmented generation | 4 |
+| source attribution | 3 |
+| quotability | 3 |
+| quotable | 3 |
+| extractability | 3 |
+| extractable | 3 |
+| fact density | 3 |
+| llms.txt | 5 |
+
+### 4.11 AI 크롤러 접근성 (`ai_crawler_access`)
+| 키워드 | 가중치 |
+|--------|--------|
+| ai crawler | 4 |
+| gptbot | 4 |
+| claudebot | 4 |
+| perplexitybot | 4 |
+| google-extended | 4 |
+| ai.txt | 4 |
+
+### 4.12 신뢰·품질 신호 (`trust_quality`)
+| 키워드 | 가중치 |
+|--------|--------|
+| e-e-a-t | 3 |
+| eeat | 3 |
+| original research | 3 |
+| authorship | 2 |
+
+### 4.13 렌더링·기술 접근성 (`rendering_access`)
+| 키워드 | 가중치 |
+|--------|--------|
+| javascript rendering | 3 |
+| client-side rendering | 3 |
+| server-side rendering | 3 |
+| dynamic rendering | 3 |
+| prerendering | 3 |
+| pre-rendering | 3 |
+| hydration | 2 |
+| indexability | 3 |
+| crawlability | 3 |
+| crawl budget | 3 |
+| rendered html | 3 |
+| raw html | 3 |
 
 ## 5. DB 스키마
 
-Supabase(Postgres)에 아래를 적용. 중복 차단의 핵심은 `items.url_hash`의 **UNIQUE** 제약.
+Supabase(Postgres)에 아래를 적용. 중복 차단의 핵심은 `items.url_hash`의 **UNIQUE** 제약,
+주차 중복 차단의 핵심은 `digests.week`의 **UNIQUE** 제약(둘 다 upsert 대상).
 
 ```sql
 create table sources (
@@ -125,31 +258,42 @@ create table items (
   matched_keywords text[],
   relevance_score  int,
   raw_summary      text,                         -- 피드 원본 요약(정제)
+  categories       text[],                        -- 그룹 태그 (§4.1, multi-tag), collect.py가 채움
   -- 아래는 주간 요약 배치에서 채움
   summary          text,                         -- Claude 3줄 요약
-  cluster          text,                         -- 주제 클러스터
+  cluster          text,                         -- 세부 주제 클러스터
   insight          text,                         -- 클라이언트 시사점
+  relevant         boolean,                      -- Claude의 관련도 재평가 (false면 노이즈 판단)
   collected_at     timestamptz default now()
 );
 
 create table digests (
-  id             bigint generated always as identity primary key,
-  week           text not null,                  -- 예: '2026-W29'
-  headline_items bigint[],                        -- items.id 참조
-  created_at     timestamptz default now()
+  id                 bigint generated always as identity primary key,
+  week               text not null unique,        -- 예: '2026-W29', upsert 기준
+  headline_items     bigint[],                     -- items.id 참조
+  overview           text,                         -- 주간 총평
+  category_insights  jsonb,                        -- {"AI 검색 플랫폼": "2~3문장 총평", ...}
+  created_at         timestamptz default now()
 );
 
 create index items_published_idx on items (published_at desc);
 create index items_cluster_idx on items (cluster);
+create index items_categories_idx on items using gin (categories);
 ```
 
 > 참고: v1은 `sources.yaml`을 소스 원본(source of truth)으로 두고, `sources` 테이블은
 > 대시보드 표시용으로만 써도 됨. 팀이 UI에서 소스를 관리하고 싶어지면 그때 테이블로 일원화.
+>
+> **RLS 필수**: `items`, `digests` 모두 `enable row level security` 후 anon 읽기 정책
+> (`for select using (true)`)을 추가해야 대시보드(anon 키)가 조회할 수 있다. 자세한 사연은
+> [`ISSUES.md`](./ISSUES.md) 3단계 항목 참고.
 
 ## 6. 프로토타입 산출물 (참고 구현)
 
-빌더가 참고할 수 있는 **1단계 동작 구현**이 레포에 포함됨:
-- [`src/collect.py`](../src/collect.py) — 수집→필터→중복제거→`data/items.json`. §3~4 규칙이 그대로 구현됨.
+레포에 실제 동작하는 구현이 포함되어 있음 (전 단계 완료, [`BUILD-GUIDE.md`](./BUILD-GUIDE.md) 참고):
+- [`src/collect.py`](../src/collect.py) — 수집→필터→카테고리 분류→Supabase upsert. §3~4 규칙이 그대로 구현됨.
+- [`src/summarize.py`](../src/summarize.py) — 요약·클러스터링·헤드라인·카테고리별 인사이트 생성.
+- [`src/store.py`](../src/store.py) — Supabase 저장 레이어 공용 모듈.
 - 로컬 실행: `python -m venv .venv && .venv/Scripts/pip install -r requirements.txt && .venv/Scripts/python src/collect.py`
-- 이 스크립트의 저장 대상(`data/items.json`)을 Supabase upsert로 바꾸면 3단계로 넘어감.
-```
+
+> 키워드·소스 리스트는 트렌드 변화에 따라 주기적으로 업데이트가 필요함 (신규 대분류/키워드 추가 등).

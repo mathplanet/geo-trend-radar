@@ -14,6 +14,7 @@ export type Item = {
   insight: string | null;
   collected_at: string | null;
   relevant: boolean | null;
+  categories: string[] | null;
 };
 
 export type Digest = {
@@ -21,5 +22,6 @@ export type Digest = {
   week: string;
   headline_items: number[] | null;
   overview: string | null;
+  category_insights: Record<string, string> | null;
   created_at: string;
 };

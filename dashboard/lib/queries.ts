@@ -63,12 +63,3 @@ export async function getItemsForWeek(week: string): Promise<Item[]> {
   });
 }
 
-export function groupByCluster(items: Item[]): Map<string, Item[]> {
-  const groups = new Map<string, Item[]>();
-  for (const item of items) {
-    const key = item.cluster ?? "미분류";
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(item);
-  }
-  return groups;
-}

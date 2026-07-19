@@ -28,14 +28,25 @@ def load_sources():
 
 
 def load_keywords():
+    """keywords.yaml의 categories 구조를 평탄화한다.
+    반환값: keywords(kw->가중치), keyword_category(kw->대분류 라벨), patterns, default_threshold, tier_thresholds
+    """
     with open(KEYWORDS_PATH, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
-    keywords = config["keywords"]
+
+    keywords = {}
+    keyword_category = {}
+    for category in config["categories"].values():
+        label = category["label"]
+        for keyword, weight in category["keywords"].items():
+            keywords[keyword] = weight
+            keyword_category[keyword] = label
+
     patterns = {
         keyword: re.compile(r"\b" + re.escape(keyword) + r"\b")
         for keyword in keywords
     }
-    return keywords, patterns, config["default_threshold"], config["tier_thresholds"]
+    return keywords, keyword_category, patterns, config["default_threshold"], config["tier_thresholds"]
 
 
 def strip_html(text):
@@ -46,6 +57,13 @@ def score_entry(text, keywords, patterns):
     matched = [kw for kw, pattern in patterns.items() if pattern.search(text)]
     score = sum(keywords[kw] for kw in matched)
     return matched, score
+
+
+def categorize_all(matched, keyword_category):
+    """매칭된 키워드가 속한 그룹을 전부 태그한다 (가중치 무관, multi-tag).
+    한 글이 여러 그룹(대시보드 탭)에 동시에 속할 수 있다."""
+    labels = {keyword_category[kw] for kw in matched}
+    return sorted(labels)
 
 
 def resolve_threshold(source, tier_thresholds, default_threshold):
@@ -61,7 +79,7 @@ def parse_published_at(entry):
     return datetime(*parsed[:6], tzinfo=timezone.utc).isoformat()
 
 
-def collect_source(source, keywords, patterns, tier_thresholds, default_threshold):
+def collect_source(source, keywords, keyword_category, patterns, tier_thresholds, default_threshold):
     """단일 소스를 수집한다. 실패해도 예외를 삼켜 다른 소스 수집을 막지 않는다 (NFR: 소스별 격리)."""
     name = source["name"]
     tier = source["tier"]
@@ -93,6 +111,7 @@ def collect_source(source, keywords, patterns, tier_thresholds, default_threshol
         if not url:
             continue
         url_hash = hashlib.sha256(url.encode("utf-8")).hexdigest()
+        categories = categorize_all(matched, keyword_category)
 
         # summary/cluster/insight/relevant는 일부러 넣지 않는다 (store.upsert_items 참고):
         # 이미 요약된 기존 행이 재수집 시 upsert로 덮어써져 null로 되돌아가는 것을 방지.
@@ -105,6 +124,7 @@ def collect_source(source, keywords, patterns, tier_thresholds, default_threshol
             "published_at": parse_published_at(entry),
             "matched_keywords": matched,
             "relevance_score": score,
+            "categories": categories,
             "raw_summary": raw_summary_full[:RAW_SUMMARY_MAX_LEN],
         }
         passed_items.append(item)
@@ -117,14 +137,16 @@ def main():
     socket.setdefaulttimeout(FEED_TIMEOUT_SECONDS)
 
     sources = load_sources()
-    keywords, patterns, default_threshold, tier_thresholds = load_keywords()
+    keywords, keyword_category, patterns, default_threshold, tier_thresholds = load_keywords()
 
     before = count_items()
 
     all_passed_items = []
     for source in sources:
         all_passed_items.extend(
-            collect_source(source, keywords, patterns, tier_thresholds, default_threshold)
+            collect_source(
+                source, keywords, keyword_category, patterns, tier_thresholds, default_threshold
+            )
         )
 
     upsert_items(all_passed_items)

@@ -1,8 +1,8 @@
-import { getItemsForWeek, groupByCluster } from "@/lib/queries";
+import { getItemsForWeek } from "@/lib/queries";
 import { SCORE_EXPLANATION, getScoreBand } from "@/lib/score";
 import type { Digest } from "@/lib/types";
+import CategoryExplorer from "./CategoryExplorer";
 import InfoTooltip from "./InfoTooltip";
-import ItemCard from "./ItemCard";
 
 const LEGEND_SCORES = [9, 6, 3];
 
@@ -16,7 +16,6 @@ export default async function DigestView({
   const items = await getItemsForWeek(digest.week);
   const headlineIds = new Set(digest.headline_items ?? []);
   const headlineItems = items.filter((item) => headlineIds.has(item.id));
-  const clusters = groupByCluster(items);
 
   return (
     <div className="space-y-12">
@@ -89,24 +88,11 @@ export default async function DigestView({
         </section>
       )}
 
-      {[...clusters.entries()].map(([cluster, clusterItems]) => (
-        <section key={cluster}>
-          <h2 className="flex items-center gap-2 text-base font-semibold text-neutral-900 dark:text-neutral-100">
-            <span className="h-2 w-2 shrink-0 rounded-full bg-indigo-400" />
-            {cluster}
-            <span className="font-normal text-neutral-400 dark:text-neutral-500">
-              {clusterItems.length}건
-            </span>
-          </h2>
-          <div className="mt-3 space-y-3">
-            {clusterItems.map((item) => (
-              <ItemCard key={item.id} item={item} />
-            ))}
-          </div>
+      {items.length > 0 ? (
+        <section>
+          <CategoryExplorer items={items} categoryInsights={digest.category_insights} />
         </section>
-      ))}
-
-      {items.length === 0 && (
+      ) : (
         <p className="text-neutral-500 dark:text-neutral-400">
           이번 주 수집된 글이 없습니다.
         </p>

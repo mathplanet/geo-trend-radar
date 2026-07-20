@@ -3,7 +3,7 @@
 > 소스 · 키워드 · 필터 규칙 · DB 스키마. 빌더가 그대로 사용/확장하면 됨.
 > 실제 설정 파일: 레포 루트의 [`sources.yaml`](../sources.yaml), [`keywords.yaml`](../keywords.yaml)
 
-## 1. 소스 리스트 (12개, 전부 RSS 작동 확인 완료)
+## 1. 소스 리스트 (14개, 전부 RSS 작동 확인 완료)
 
 `type: rss` · 등급(tier)은 노이즈 비율에 따른 분류 → 등급별 threshold 적용(§3).
 
@@ -12,6 +12,8 @@
 |------|----------|------|
 | Google Search Central Blog | `https://developers.google.com/search/blog/feed.xml` | 구글 검색 공식 발표 (SEO 실무 직결) |
 | Google Search Product Blog | `https://blog.google/products/search/rss/` | AI Mode·AI Overviews 등 검색 제품 발표 |
+| Bing Webmaster Blog | `https://blogs.bing.com/webmaster/feed` | Bing 검색 공식 발표 (AI 관련 기능 다수) |
+| Naver 웹마스터 블로그 | `https://rss.blog.naver.com/naver_webmaster.xml` | 네이버 검색 공식 발표 (국내 검색 동향) |
 
 ### trade — SEO 전문 매체 (기본)
 | 소스 | feed URL | 성격 |

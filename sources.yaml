@@ -12,6 +12,14 @@ sources:
     feed_url: https://blog.google/products/search/rss/
     tier: primary
 
+  - name: Bing Webmaster Blog
+    feed_url: https://blogs.bing.com/webmaster/feed
+    tier: primary
+
+  - name: Naver 웹마스터 블로그
+    feed_url: https://rss.blog.naver.com/naver_webmaster.xml
+    tier: primary
+
   # --- trade: SEO 전문 매체 ---
   - name: Search Engine Land
     feed_url: https://searchengineland.com/feed

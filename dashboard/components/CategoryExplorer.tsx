@@ -31,6 +31,8 @@ export default function CategoryExplorer({
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState(ALL_TAB);
   const [selectedDate, setSelectedDate] = useState(ALL_DATES);
+  const [rangeStart, setRangeStart] = useState("");
+  const [rangeEnd, setRangeEnd] = useState("");
 
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -62,9 +64,18 @@ export default function CategoryExplorer({
   const dateKeys = [...dateCounts.keys()].sort();
 
   const dateFilteredItems = useMemo(() => {
+    if (rangeStart || rangeEnd) {
+      return tabItems.filter((item) => {
+        const key = dateKey(item);
+        if (!key) return false;
+        if (rangeStart && key < rangeStart) return false;
+        if (rangeEnd && key > rangeEnd) return false;
+        return true;
+      });
+    }
     if (selectedDate === ALL_DATES) return tabItems;
     return tabItems.filter((item) => dateKey(item) === selectedDate);
-  }, [tabItems, selectedDate]);
+  }, [tabItems, selectedDate, rangeStart, rangeEnd]);
 
   const filteredItems = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -98,6 +109,8 @@ export default function CategoryExplorer({
             onClick={() => {
               setActiveTab(tab);
               setSelectedDate(ALL_DATES);
+              setRangeStart("");
+              setRangeEnd("");
             }}
             className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
               activeTab === tab
@@ -114,14 +127,18 @@ export default function CategoryExplorer({
       </div>
 
       {dateKeys.length > 1 && (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           {[ALL_DATES, ...dateKeys].map((key) => (
             <button
               key={key}
               type="button"
-              onClick={() => setSelectedDate(key)}
+              onClick={() => {
+                setSelectedDate(key);
+                setRangeStart("");
+                setRangeEnd("");
+              }}
               className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                selectedDate === key
+                selectedDate === key && !rangeStart && !rangeEnd
                   ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300"
                   : "text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
               }`}
@@ -132,6 +149,43 @@ export default function CategoryExplorer({
               )}
             </button>
           ))}
+
+          <span className="mx-1 h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
+
+          <label className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+            기간
+            <input
+              type="date"
+              value={rangeStart}
+              onChange={(e) => {
+                setRangeStart(e.target.value);
+                setSelectedDate(ALL_DATES);
+              }}
+              className="rounded-md border border-neutral-300 bg-white px-1.5 py-0.5 text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+            />
+          </label>
+          <span className="text-xs text-neutral-400">~</span>
+          <input
+            type="date"
+            value={rangeEnd}
+            onChange={(e) => {
+              setRangeEnd(e.target.value);
+              setSelectedDate(ALL_DATES);
+            }}
+            className="rounded-md border border-neutral-300 bg-white px-1.5 py-0.5 text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+          />
+          {(rangeStart || rangeEnd) && (
+            <button
+              type="button"
+              onClick={() => {
+                setRangeStart("");
+                setRangeEnd("");
+              }}
+              className="text-xs text-neutral-400 underline-offset-2 hover:underline dark:text-neutral-500"
+            >
+              초기화
+            </button>
+          )}
         </div>
       )}
 

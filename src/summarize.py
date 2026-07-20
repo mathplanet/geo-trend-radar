@@ -111,6 +111,18 @@ def build_category_insights(client, items):
     return result.get("category_insights", {})
 
 
+def compute_week_label(items):
+    """실행 시각(datetime.now())으로 주차를 정하면, 스크립트가 자정 근처에 걸쳐 실행될 때
+    실제 데이터의 주차와 라벨이 어긋날 수 있다 (ISSUES.md 참고). collected_at(우리가 기록,
+    항상 신뢰 가능) 중 가장 최근 값을 기준으로 주차를 정해 이 문제를 피한다."""
+    dates = [item.get("collected_at") or item.get("published_at") for item in items]
+    dates = [d for d in dates if d]
+    if not dates:
+        return datetime.now(timezone.utc).strftime("%G-W%V")
+    latest = max(datetime.fromisoformat(d.replace("Z", "+00:00")) for d in dates)
+    return latest.strftime("%G-W%V")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--days", type=int, default=7, help="최근 N일 items만 대상 (기본 7)")
@@ -152,7 +164,7 @@ def main():
         return
 
     digest = build_digest(client, digest_candidates)
-    week_label = datetime.now(timezone.utc).strftime("%G-W%V")
+    week_label = compute_week_label(digest_candidates)
     headline_ids = digest.get("headline_ids", [])
     overview = digest.get("overview")
     category_insights = build_category_insights(client, digest_candidates)

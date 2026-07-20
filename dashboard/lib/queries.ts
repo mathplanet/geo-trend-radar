@@ -46,7 +46,9 @@ export async function getAllDigestWeeks(): Promise<string[]> {
   return (data ?? []).map((row) => row.week);
 }
 
-/** published_at 없으면 collected_at으로 대체해 주차 범위에 속하는 관련 글만 가져온다. */
+/** published_at(피드 제공, 가끔 부정확)나 collected_at(우리가 기록, 항상 신뢰 가능) 둘 중
+ * 하나라도 주차 범위에 들어오면 포함시킨다. published_at만 보면 피드가 엉뚱한 날짜를 주는
+ * 글이 어느 주차에서도 안 보이는 문제가 있었음 (ISSUES.md 참고). */
 export async function getItemsForWeek(week: string): Promise<Item[]> {
   const { start, end } = isoWeekToRange(week);
   const { data } = await supabase
@@ -56,10 +58,11 @@ export async function getItemsForWeek(week: string): Promise<Item[]> {
     .order("relevance_score", { ascending: false });
 
   return (data ?? []).filter((item) => {
-    const ts = item.published_at ?? item.collected_at;
-    if (!ts) return false;
-    const date = new Date(ts);
-    return date >= start && date <= end;
+    return [item.published_at, item.collected_at].some((ts) => {
+      if (!ts) return false;
+      const date = new Date(ts);
+      return date >= start && date <= end;
+    });
   });
 }
 

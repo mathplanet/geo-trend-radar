@@ -69,8 +69,15 @@ def upsert_digest(week, headline_item_ids, overview, category_insights=None):
 
 
 def within_window(item, days):
-    ts = item.get("published_at") or item.get("collected_at")
-    if not ts:
-        return True
-    dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
-    return dt >= datetime.now(timezone.utc) - timedelta(days=days)
+    """published_at(피드 제공, 가끔 부정확/오래됨)나 collected_at(우리가 기록, 항상 신뢰 가능)
+    둘 중 하나라도 최근 N일 이내면 포함시킨다. published_at만 믿으면 피드가 잘못된 날짜를 주는
+    글이 영원히 요약 대상에서 빠지는 문제가 있었음 (ISSUES.md 참고)."""
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    for key in ("published_at", "collected_at"):
+        ts = item.get(key)
+        if not ts:
+            continue
+        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        if dt >= cutoff:
+            return True
+    return False

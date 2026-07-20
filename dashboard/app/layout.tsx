@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import NavLinks from "@/components/NavLinks";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -39,12 +40,7 @@ export default function RootLayout({
                 GEO/SEO 트렌드 주간 다이제스트
               </p>
             </div>
-            <Link
-              href="/stats"
-              className="text-sm font-medium text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-            >
-              수집 현황
-            </Link>
+            <NavLinks />
           </div>
         </header>
         <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">

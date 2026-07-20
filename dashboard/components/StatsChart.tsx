@@ -28,13 +28,34 @@ type Tooltip = {
   y: number;
 };
 
+function itemDay(item: StatsItem): string | null {
+  const ts = item.collected_at ?? item.published_at;
+  return ts ? ts.slice(0, 10) : null;
+}
+
 export default function StatsChart({ items }: { items: StatsItem[] }) {
   const [granularity, setGranularity] = useState<Granularity>("week");
   const [view, setView] = useState<"chart" | "table">("chart");
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
+  const [rangeStart, setRangeStart] = useState("");
+  const [rangeEnd, setRangeEnd] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const buckets = useMemo(() => aggregateByCategory(items, granularity), [items, granularity]);
+  const rangeFilteredItems = useMemo(() => {
+    if (!rangeStart && !rangeEnd) return items;
+    return items.filter((item) => {
+      const day = itemDay(item);
+      if (!day) return false;
+      if (rangeStart && day < rangeStart) return false;
+      if (rangeEnd && day > rangeEnd) return false;
+      return true;
+    });
+  }, [items, rangeStart, rangeEnd]);
+
+  const buckets = useMemo(
+    () => aggregateByCategory(rangeFilteredItems, granularity),
+    [rangeFilteredItems, granularity]
+  );
   const activeCategories = useMemo(() => getActiveCategories(buckets), [buckets]);
   const maxTotal = useMemo(
     () => niceMax(Math.max(0, ...buckets.map((b) => b.total))),
@@ -80,6 +101,37 @@ export default function StatsChart({ items }: { items: StatsItem[] }) {
         >
           {view === "chart" ? "표로 보기" : "차트로 보기"}
         </button>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+        <label className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
+          기간
+          <input
+            type="date"
+            value={rangeStart}
+            onChange={(e) => setRangeStart(e.target.value)}
+            className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+          />
+        </label>
+        <span className="text-neutral-400">~</span>
+        <input
+          type="date"
+          value={rangeEnd}
+          onChange={(e) => setRangeEnd(e.target.value)}
+          className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+        />
+        {(rangeStart || rangeEnd) && (
+          <button
+            type="button"
+            onClick={() => {
+              setRangeStart("");
+              setRangeEnd("");
+            }}
+            className="text-neutral-400 underline-offset-2 hover:underline dark:text-neutral-500"
+          >
+            초기화
+          </button>
+        )}
       </div>
 
       <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">

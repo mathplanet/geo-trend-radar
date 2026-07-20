@@ -32,7 +32,7 @@ export default function ItemCard({ item }: { item: Item }) {
         </span>
       </div>
       <p className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-        {item.source ?? "출처 미상"} · {formatDate(item.published_at)}
+        {item.source ?? "출처 미상"} · {formatDate(item.published_at ?? item.collected_at)}
       </p>
       {item.summary && (
         <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">

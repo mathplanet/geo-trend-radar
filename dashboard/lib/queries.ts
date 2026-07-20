@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { supabase } from "./supabase";
 import type { StatsItem } from "./stats";
 import type { Digest, Item } from "./types";
@@ -18,6 +19,13 @@ export function isoWeekToRange(week: string): { start: Date; end: Date } {
   sunday.setUTCHours(23, 59, 59, 999);
 
   return { start: monday, end: sunday };
+}
+
+/** "2026-W29" -> "7/13~7/19" (주차 라벨만으로는 실제 날짜를 알 수 없어서 함께 표시). */
+export function formatWeekRange(week: string): string {
+  const { start, end } = isoWeekToRange(week);
+  const fmt = (d: Date) => `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+  return `${fmt(start)}~${fmt(end)}`;
 }
 
 export async function getLatestDigest(): Promise<Digest | null> {
@@ -49,8 +57,10 @@ export async function getAllDigestWeeks(): Promise<string[]> {
 
 /** published_at(피드 제공, 가끔 부정확)나 collected_at(우리가 기록, 항상 신뢰 가능) 둘 중
  * 하나라도 주차 범위에 들어오면 포함시킨다. published_at만 보면 피드가 엉뚱한 날짜를 주는
- * 글이 어느 주차에서도 안 보이는 문제가 있었음 (ISSUES.md 참고). */
-export async function getItemsForWeek(week: string): Promise<Item[]> {
+ * 글이 어느 주차에서도 안 보이는 문제가 있었음 (ISSUES.md 참고).
+ * React.cache로 감싸서, 같은 요청 안에서 DigestView/사이드바가 각자 호출해도
+ * Supabase 쿼리는 한 번만 나간다. */
+export const getItemsForWeek = cache(async (week: string): Promise<Item[]> => {
   const { start, end } = isoWeekToRange(week);
   const { data } = await supabase
     .from("items")
@@ -65,7 +75,7 @@ export async function getItemsForWeek(week: string): Promise<Item[]> {
       return date >= start && date <= end;
     });
   });
-}
+});
 
 /** 통계 페이지(수집 현황)용 전체 items. 대시보드 본문과 동일하게 relevant=false(노이즈)는 제외. */
 export async function getAllItemsForStats(): Promise<StatsItem[]> {

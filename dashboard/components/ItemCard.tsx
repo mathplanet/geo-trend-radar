@@ -3,10 +3,13 @@ import { getScoreBand } from "@/lib/score";
 
 function formatDate(ts: string | null): string {
   if (!ts) return "-";
+  // timeZone을 명시하지 않으면 서버(빌드 시점)와 브라우저(사용자 로컬)가 서로 다른
+  // 타임존으로 계산해 결과 문자열이 달라져 하이드레이션 불일치(React #418)가 났었음.
   return new Date(ts).toLocaleDateString("ko-KR", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
+    timeZone: "Asia/Seoul",
   });
 }
 

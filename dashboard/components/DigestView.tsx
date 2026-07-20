@@ -1,4 +1,4 @@
-import { getItemsForWeek } from "@/lib/queries";
+import { formatWeekRange, getItemsForWeek } from "@/lib/queries";
 import { SCORE_EXPLANATION, getScoreBand } from "@/lib/score";
 import type { Digest } from "@/lib/types";
 import CategoryExplorer from "./CategoryExplorer";
@@ -24,6 +24,9 @@ export default async function DigestView({
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
             {digest.week} 다이제스트
           </h1>
+          <span className="text-sm font-medium text-neutral-400 dark:text-neutral-500">
+            ({formatWeekRange(digest.week)})
+          </span>
           {isLatest && (
             <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
               최신

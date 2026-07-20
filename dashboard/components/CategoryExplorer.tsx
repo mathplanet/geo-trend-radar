@@ -5,20 +5,12 @@ import type { Item } from "@/lib/types";
 import ItemCard from "./ItemCard";
 
 const ALL_TAB = "전체";
-const ALL_DATES = "전체";
-const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 function dateKey(item: Item): string | null {
   const ts = item.published_at ?? item.collected_at;
   if (!ts) return null;
   const d = new Date(ts);
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-}
-
-function dateLabel(key: string): string {
-  const [y, m, d] = key.split("-").map(Number);
-  const date = new Date(Date.UTC(y, m - 1, d));
-  return `${m}/${d}(${WEEKDAYS[date.getUTCDay()]})`;
 }
 
 export default function CategoryExplorer({
@@ -30,7 +22,6 @@ export default function CategoryExplorer({
 }) {
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState(ALL_TAB);
-  const [selectedDate, setSelectedDate] = useState(ALL_DATES);
   const [rangeStart, setRangeStart] = useState("");
   const [rangeEnd, setRangeEnd] = useState("");
 
@@ -51,31 +42,16 @@ export default function CategoryExplorer({
     return items.filter((item) => (item.categories ?? []).includes(activeTab));
   }, [items, activeTab]);
 
-  const dateCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const item of tabItems) {
-      const key = dateKey(item);
-      if (!key) continue;
-      counts.set(key, (counts.get(key) ?? 0) + 1);
-    }
-    return counts;
-  }, [tabItems]);
-
-  const dateKeys = [...dateCounts.keys()].sort();
-
   const dateFilteredItems = useMemo(() => {
-    if (rangeStart || rangeEnd) {
-      return tabItems.filter((item) => {
-        const key = dateKey(item);
-        if (!key) return false;
-        if (rangeStart && key < rangeStart) return false;
-        if (rangeEnd && key > rangeEnd) return false;
-        return true;
-      });
-    }
-    if (selectedDate === ALL_DATES) return tabItems;
-    return tabItems.filter((item) => dateKey(item) === selectedDate);
-  }, [tabItems, selectedDate, rangeStart, rangeEnd]);
+    if (!rangeStart && !rangeEnd) return tabItems;
+    return tabItems.filter((item) => {
+      const key = dateKey(item);
+      if (!key) return false;
+      if (rangeStart && key < rangeStart) return false;
+      if (rangeEnd && key > rangeEnd) return false;
+      return true;
+    });
+  }, [tabItems, rangeStart, rangeEnd]);
 
   const filteredItems = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -108,7 +84,6 @@ export default function CategoryExplorer({
             type="button"
             onClick={() => {
               setActiveTab(tab);
-              setSelectedDate(ALL_DATES);
               setRangeStart("");
               setRangeEnd("");
             }}
@@ -126,68 +101,36 @@ export default function CategoryExplorer({
         ))}
       </div>
 
-      {dateKeys.length > 1 && (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {[ALL_DATES, ...dateKeys].map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => {
-                setSelectedDate(key);
-                setRangeStart("");
-                setRangeEnd("");
-              }}
-              className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                selectedDate === key && !rangeStart && !rangeEnd
-                  ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300"
-                  : "text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
-              }`}
-            >
-              {key === ALL_DATES ? ALL_DATES : dateLabel(key)}
-              {key !== ALL_DATES && (
-                <span className="ml-1 opacity-70">{dateCounts.get(key)}</span>
-              )}
-            </button>
-          ))}
-
-          <span className="mx-1 h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
-
-          <label className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-            기간
-            <input
-              type="date"
-              value={rangeStart}
-              onChange={(e) => {
-                setRangeStart(e.target.value);
-                setSelectedDate(ALL_DATES);
-              }}
-              className="rounded-md border border-neutral-300 bg-white px-1.5 py-0.5 text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-            />
-          </label>
-          <span className="text-xs text-neutral-400">~</span>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <label className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+          기간
           <input
             type="date"
-            value={rangeEnd}
-            onChange={(e) => {
-              setRangeEnd(e.target.value);
-              setSelectedDate(ALL_DATES);
-            }}
+            value={rangeStart}
+            onChange={(e) => setRangeStart(e.target.value)}
             className="rounded-md border border-neutral-300 bg-white px-1.5 py-0.5 text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
           />
-          {(rangeStart || rangeEnd) && (
-            <button
-              type="button"
-              onClick={() => {
-                setRangeStart("");
-                setRangeEnd("");
-              }}
-              className="text-xs text-neutral-400 underline-offset-2 hover:underline dark:text-neutral-500"
-            >
-              초기화
-            </button>
-          )}
-        </div>
-      )}
+        </label>
+        <span className="text-xs text-neutral-400">~</span>
+        <input
+          type="date"
+          value={rangeEnd}
+          onChange={(e) => setRangeEnd(e.target.value)}
+          className="rounded-md border border-neutral-300 bg-white px-1.5 py-0.5 text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+        />
+        {(rangeStart || rangeEnd) && (
+          <button
+            type="button"
+            onClick={() => {
+              setRangeStart("");
+              setRangeEnd("");
+            }}
+            className="text-xs text-neutral-400 underline-offset-2 hover:underline dark:text-neutral-500"
+          >
+            초기화
+          </button>
+        )}
+      </div>
 
       <input
         type="text"

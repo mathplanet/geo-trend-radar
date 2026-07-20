@@ -85,3 +85,30 @@ def within_window(item, days):
         if dt >= cutoff:
             return True
     return False
+
+
+def current_week_range():
+    """이번 주 [월요일 00:00, 일요일 23:59:59] UTC 범위.
+    대시보드(queries.ts의 isoWeekToRange)와 동일한 규칙."""
+    now = datetime.now(timezone.utc)
+    monday = (now - timedelta(days=now.weekday())).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    sunday = monday + timedelta(days=6, hours=23, minutes=59, seconds=59)
+    return monday, sunday
+
+
+def within_current_week(item):
+    """다이제스트에 다른 주의 글이 섞이는 것을 막기 위한 엄격한 필터.
+    --days 롤링 윈도우는 정확한 주 경계와 어긋날 수 있어(예: --days 30으로 재실행하면
+    지난 주 글까지 이번 주 다이제스트에 섞임), 다이제스트 대상 선정에는 이 함수를 쓴다.
+    published_at/collected_at 중 하나라도 이번 주 범위에 들어오면 포함."""
+    start, end = current_week_range()
+    for key in ("published_at", "collected_at"):
+        ts = item.get(key)
+        if not ts:
+            continue
+        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        if start <= dt <= end:
+            return True
+    return False

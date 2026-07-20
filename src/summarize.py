@@ -21,6 +21,7 @@ from store import (
     update_item_cluster,
     update_item_summary,
     upsert_digest,
+    within_current_week,
     within_window,
 )
 
@@ -191,9 +192,12 @@ def main():
         mark = "O" if item["relevant"] else "X"
         print(f"[{mark}] ({item['cluster']}) {item['title'][:60]}")
 
+    # --days 롤링 윈도우가 아니라 "이번 주(월~일)" 경계로 엄격하게 제한한다.
+    # 안 그러면 --days를 넓게 주고 재실행할 때 지난 주 글까지 이번 주 다이제스트에
+    # 섞여 들어간다 (대시보드가 주차별로 딱 그 범위만 보여주는 것과 어긋남).
     digest_candidates = [
         item for item in items
-        if within_window(item, args.days) and item.get("summary") and item.get("relevant", True)
+        if within_current_week(item) and item.get("summary") and item.get("relevant", True)
     ]
     if not digest_candidates:
         print("헤드라인을 선정할 관련 글이 없습니다.")

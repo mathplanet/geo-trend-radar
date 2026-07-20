@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Item } from "@/lib/types";
+import BulletList from "./BulletList";
 import ItemCard from "./ItemCard";
 
 const ALL_TAB = "전체";
@@ -141,9 +142,10 @@ export default function CategoryExplorer({
       />
 
       {activeInsight && (
-        <p className="mt-4 rounded-lg bg-indigo-50/60 px-4 py-3 text-sm leading-relaxed text-neutral-700 dark:bg-indigo-950/30 dark:text-neutral-300">
-          {activeInsight}
-        </p>
+        <BulletList
+          text={activeInsight}
+          className="mt-4 rounded-lg bg-indigo-50/60 px-4 py-3 text-sm leading-relaxed text-neutral-700 dark:bg-indigo-950/30 dark:text-neutral-300"
+        />
       )}
 
       <div className="mt-6 space-y-8">

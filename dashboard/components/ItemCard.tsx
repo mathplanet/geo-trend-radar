@@ -1,4 +1,5 @@
 import type { Item } from "@/lib/types";
+import BulletList from "./BulletList";
 import { getScoreBand } from "@/lib/score";
 
 function formatDate(ts: string | null): string {
@@ -38,18 +39,10 @@ export default function ItemCard({ item }: { item: Item }) {
         {item.source ?? "출처 미상"} · {formatDate(item.published_at ?? item.collected_at)}
       </p>
       {item.summary && (
-        <ul className="mt-2.5 space-y-1 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
-          {item.summary
-            .split("\n")
-            .map((line) => line.replace(/^[-•]\s*/, "").trim())
-            .filter(Boolean)
-            .map((line, i) => (
-              <li key={i} className="flex gap-1.5">
-                <span className="mt-0.5 shrink-0 text-neutral-400 dark:text-neutral-500">•</span>
-                <span>{line}</span>
-              </li>
-            ))}
-        </ul>
+        <BulletList
+          text={item.summary}
+          className="mt-2.5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300"
+        />
       )}
     </article>
   );

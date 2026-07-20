@@ -1,6 +1,7 @@
 import { formatWeekRange, getItemsForWeek } from "@/lib/queries";
 import { SCORE_EXPLANATION, getScoreBand } from "@/lib/score";
 import type { Digest } from "@/lib/types";
+import BulletList from "./BulletList";
 import CategoryExplorer from "./CategoryExplorer";
 import InfoTooltip from "./InfoTooltip";
 
@@ -35,8 +36,11 @@ export default async function DigestView({
         </div>
 
         {digest.overview && (
-          <blockquote className="mt-4 rounded-lg border-l-4 border-indigo-400 bg-indigo-50/60 px-4 py-3 text-[15px] leading-relaxed whitespace-pre-line text-neutral-800 dark:border-indigo-500 dark:bg-indigo-950/30 dark:text-neutral-200">
-            {digest.overview}
+          <blockquote className="mt-4 rounded-lg border-l-4 border-indigo-400 bg-indigo-50/60 px-4 py-3 dark:border-indigo-500 dark:bg-indigo-950/30">
+            <BulletList
+              text={digest.overview}
+              className="text-[15px] leading-relaxed text-neutral-800 dark:text-neutral-200"
+            />
           </blockquote>
         )}
 

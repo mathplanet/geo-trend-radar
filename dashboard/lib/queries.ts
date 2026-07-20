@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import type { StatsItem } from "./stats";
 import type { Digest, Item } from "./types";
 
 /** ISO 8601 주차 문자열("2026-W29", collect.py의 "%G-W%V"와 동일 규칙)을
@@ -64,5 +65,14 @@ export async function getItemsForWeek(week: string): Promise<Item[]> {
       return date >= start && date <= end;
     });
   });
+}
+
+/** 통계 페이지(수집 현황)용 전체 items. 대시보드 본문과 동일하게 relevant=false(노이즈)는 제외. */
+export async function getAllItemsForStats(): Promise<StatsItem[]> {
+  const { data } = await supabase
+    .from("items")
+    .select("collected_at, published_at, categories")
+    .or(`relevant.is.null,relevant.eq.true`);
+  return data ?? [];
 }
 

@@ -5,6 +5,21 @@ import type { Item } from "@/lib/types";
 import ItemCard from "./ItemCard";
 
 const ALL_TAB = "전체";
+const ALL_DATES = "전체";
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
+function dateKey(item: Item): string | null {
+  const ts = item.published_at ?? item.collected_at;
+  if (!ts) return null;
+  const d = new Date(ts);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
+function dateLabel(key: string): string {
+  const [y, m, d] = key.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  return `${m}/${d}(${WEEKDAYS[date.getUTCDay()]})`;
+}
 
 export default function CategoryExplorer({
   items,
@@ -15,6 +30,7 @@ export default function CategoryExplorer({
 }) {
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState(ALL_TAB);
+  const [selectedDate, setSelectedDate] = useState(ALL_DATES);
 
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -33,15 +49,32 @@ export default function CategoryExplorer({
     return items.filter((item) => (item.categories ?? []).includes(activeTab));
   }, [items, activeTab]);
 
+  const dateCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of tabItems) {
+      const key = dateKey(item);
+      if (!key) continue;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return counts;
+  }, [tabItems]);
+
+  const dateKeys = [...dateCounts.keys()].sort();
+
+  const dateFilteredItems = useMemo(() => {
+    if (selectedDate === ALL_DATES) return tabItems;
+    return tabItems.filter((item) => dateKey(item) === selectedDate);
+  }, [tabItems, selectedDate]);
+
   const filteredItems = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return tabItems;
-    return tabItems.filter(
+    if (!q) return dateFilteredItems;
+    return dateFilteredItems.filter(
       (item) =>
         item.title.toLowerCase().includes(q) ||
         (item.summary ?? "").toLowerCase().includes(q)
     );
-  }, [tabItems, query]);
+  }, [dateFilteredItems, query]);
 
   const clusters = useMemo(() => {
     const groups = new Map<string, Item[]>();
@@ -62,7 +95,10 @@ export default function CategoryExplorer({
           <button
             key={tab}
             type="button"
-            onClick={() => setActiveTab(tab)}
+            onClick={() => {
+              setActiveTab(tab);
+              setSelectedDate(ALL_DATES);
+            }}
             className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
               activeTab === tab
                 ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
@@ -76,6 +112,28 @@ export default function CategoryExplorer({
           </button>
         ))}
       </div>
+
+      {dateKeys.length > 1 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {[ALL_DATES, ...dateKeys].map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setSelectedDate(key)}
+              className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                selectedDate === key
+                  ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300"
+                  : "text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
+              }`}
+            >
+              {key === ALL_DATES ? ALL_DATES : dateLabel(key)}
+              {key !== ALL_DATES && (
+                <span className="ml-1 opacity-70">{dateCounts.get(key)}</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
 
       <input
         type="text"

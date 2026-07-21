@@ -21,12 +21,14 @@ KEYWORDS_PATH = ROOT / "keywords.yaml"
 
 RAW_SUMMARY_MAX_LEN = 500  # Supabase 무료 티어 용량 절약 (BUILD-GUIDE.md 운영 체크리스트)
 FEED_TIMEOUT_SECONDS = 15
-# 격일로 수집하므로, 진짜 새 글이면 published_at이 수집 시점 기준 하루 전까지는 들어와야 한다.
+# 격일(2일 간격, collect.yml의 cron 참고)로 수집하므로, 직전 실행 직후에 나온 글도 다음
+# 실행 시점엔 최대 2일 가까이 지나있을 수 있다 - 임계값을 수집 간격보다 짧게 잡으면 그 사이에
+# 나온 진짜 새 글까지 매 회 놓치게 된다 (재수집 로직이 없어 한 번 놓치면 영영 수집 안 됨).
 # 일부 피드(예: 네이버 웹마스터 블로그)는 몇 년 전 글을 계속 "최신"인 것처럼 내보내는데,
 # 예전엔 이런 글의 published_at만 비우고 계속 수집했더니 화면에서 collected_at으로
 # 대체 표시되며 오늘 글처럼 보이는 문제가 있었음 (ISSUES.md 참고). 이제는 아예 수집 대상에서
 # 제외한다 (published_at이 없는 경우는 판단 불가라 그대로 수집).
-MAX_PUBLISHED_AGE_DAYS = 1
+MAX_PUBLISHED_AGE_DAYS = 2
 
 TAG_RE = re.compile(r"<[^<]+?>")
 

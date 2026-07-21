@@ -18,9 +18,12 @@ KEYWORDS_PATH = ROOT / "keywords.yaml"
 
 RAW_SUMMARY_MAX_LEN = 500  # Supabase 무료 티어 용량 절약 (BUILD-GUIDE.md 운영 체크리스트)
 FEED_TIMEOUT_SECONDS = 15
-# 일부 피드가 몇 달~1년 전 글을 최신인 것처럼 published_at에 잘못 표기해서 내보내는 경우가
-# 있었음 (ISSUES.md 참고). 수집 시점보다 이보다 오래된 published_at은 신뢰하지 않고 버린다.
-MAX_PUBLISHED_AGE_DAYS = 120
+# 격일로 수집하므로, 진짜 새 글이면 published_at이 수집 시점 기준 하루 전까지는 들어와야 한다.
+# 일부 피드(예: 네이버 웹마스터 블로그)는 몇 년 전 글을 계속 "최신"인 것처럼 내보내는데,
+# 예전엔 이런 글의 published_at만 비우고 계속 수집했더니 화면에서 collected_at으로
+# 대체 표시되며 오늘 글처럼 보이는 문제가 있었음 (ISSUES.md 참고). 이제는 아예 수집 대상에서
+# 제외한다 (published_at이 없는 경우는 판단 불가라 그대로 수집).
+MAX_PUBLISHED_AGE_DAYS = 1
 
 TAG_RE = re.compile(r"<[^<]+?>")
 
@@ -76,13 +79,20 @@ def resolve_threshold(source, tier_thresholds, default_threshold):
 
 
 def parse_published_at(entry):
+    """피드가 날짜를 안 주면 None (판단 불가 -> caller가 그대로 수집)."""
     parsed = entry.get("published_parsed")
     if not parsed:
         return None
-    dt = datetime(*parsed[:6], tzinfo=timezone.utc)
-    if dt < datetime.now(timezone.utc) - timedelta(days=MAX_PUBLISHED_AGE_DAYS):
-        return None  # 피드가 준 날짜를 신뢰할 수 없음 -> collected_at으로만 판단하도록 비워둠
-    return dt.isoformat()
+    return datetime(*parsed[:6], tzinfo=timezone.utc).isoformat()
+
+
+def is_too_old(published_at):
+    """published_at이 있는데 수집 시점 기준 MAX_PUBLISHED_AGE_DAYS보다 오래됐으면 True.
+    날짜 정보가 아예 없으면(None) 판단을 보류하고 False(제외하지 않음)를 반환한다."""
+    if not published_at:
+        return False
+    dt = datetime.fromisoformat(published_at)
+    return dt < datetime.now(timezone.utc) - timedelta(days=MAX_PUBLISHED_AGE_DAYS)
 
 
 def collect_source(source, keywords, keyword_category, patterns, tier_thresholds, default_threshold):
@@ -104,6 +114,7 @@ def collect_source(source, keywords, keyword_category, patterns, tier_thresholds
         return []
 
     passed_items = []
+    stale_count = 0
     for entry in entries:
         title = entry.get("title", "")
         raw_summary_full = strip_html(entry.get("summary", "") or entry.get("description", ""))
@@ -111,6 +122,11 @@ def collect_source(source, keywords, keyword_category, patterns, tier_thresholds
 
         matched, score = score_entry(text, keywords, patterns)
         if score < threshold:
+            continue
+
+        published_at = parse_published_at(entry)
+        if is_too_old(published_at):
+            stale_count += 1
             continue
 
         url = entry.get("link")
@@ -127,7 +143,7 @@ def collect_source(source, keywords, keyword_category, patterns, tier_thresholds
             "title": title,
             "source": name,
             "tier": tier,
-            "published_at": parse_published_at(entry),
+            "published_at": published_at,
             "matched_keywords": matched,
             "relevance_score": score,
             "categories": categories,
@@ -135,7 +151,8 @@ def collect_source(source, keywords, keyword_category, patterns, tier_thresholds
         }
         passed_items.append(item)
 
-    print(f"[{tier}] {name}: 총 {total}건 → 통과 {len(passed_items)}건")
+    stale_note = f" (오래된 글 {stale_count}건 제외)" if stale_count else ""
+    print(f"[{tier}] {name}: 총 {total}건 → 통과 {len(passed_items)}건{stale_note}")
     return passed_items
 
 

@@ -14,21 +14,22 @@ from datetime import datetime, timedelta, timezone
 import feedparser
 import yaml
 
-from store import ROOT, count_items, upsert_items
+from store import ROOT, count_items, get_last_collected_at, upsert_items
 
 SOURCES_PATH = ROOT / "sources.yaml"
 KEYWORDS_PATH = ROOT / "keywords.yaml"
 
 RAW_SUMMARY_MAX_LEN = 500  # Supabase 무료 티어 용량 절약 (BUILD-GUIDE.md 운영 체크리스트)
 FEED_TIMEOUT_SECONDS = 15
-# 격일(2일 간격, collect.yml의 cron 참고)로 수집하므로, 직전 실행 직후에 나온 글도 다음
-# 실행 시점엔 최대 2일 가까이 지나있을 수 있다 - 임계값을 수집 간격보다 짧게 잡으면 그 사이에
-# 나온 진짜 새 글까지 매 회 놓치게 된다 (재수집 로직이 없어 한 번 놓치면 영영 수집 안 됨).
+# 고정 N일 창을 쓰면 실행 주기(cron)가 밀리거나 한 번 건너뛰었을 때 그 사이 글이 샌다.
+# 그래서 "지금부터 N일 전"이 아니라 "DB에 실제로 마지막 수집된 시각 이후"를 기준으로 삼는다
+# (main()에서 실행 시작 시 한 번만 조회해 cutoff로 사용). DB가 비어있는 최초 실행에 한해서만
+# 아래 기본값으로 대체한다.
 # 일부 피드(예: 네이버 웹마스터 블로그)는 몇 년 전 글을 계속 "최신"인 것처럼 내보내는데,
 # 예전엔 이런 글의 published_at만 비우고 계속 수집했더니 화면에서 collected_at으로
 # 대체 표시되며 오늘 글처럼 보이는 문제가 있었음 (ISSUES.md 참고). 이제는 아예 수집 대상에서
 # 제외한다 (published_at이 없는 경우는 판단 불가라 그대로 수집).
-MAX_PUBLISHED_AGE_DAYS = 2
+INITIAL_CUTOFF_FALLBACK_DAYS = 2
 
 TAG_RE = re.compile(r"<[^<]+?>")
 
@@ -135,17 +136,17 @@ def parse_published_at(entry):
     return datetime(*parsed[:6], tzinfo=timezone.utc).isoformat()
 
 
-def is_too_old(published_at):
-    """published_at이 있는데 수집 시점 기준 MAX_PUBLISHED_AGE_DAYS보다 오래됐으면 True.
+def is_too_old(published_at, cutoff):
+    """published_at이 있는데 cutoff(직전 수집 시각)보다 이전이면 True.
     실제 게재일이 트렌드 판단의 핵심이라, 날짜 정보가 아예 없는 글(None)도 오래된 것과 동일하게
     제외한다 (판단 보류로 그냥 통과시켰다가 몇 달 전 글이 최신인 것처럼 섞여 들어간 사고가 있었음)."""
     if not published_at:
         return True
     dt = datetime.fromisoformat(published_at)
-    return dt < datetime.now(timezone.utc) - timedelta(days=MAX_PUBLISHED_AGE_DAYS)
+    return dt < cutoff
 
 
-def collect_source(source, keywords, keyword_category, patterns, tier_thresholds, default_threshold):
+def collect_source(source, keywords, keyword_category, patterns, tier_thresholds, default_threshold, cutoff):
     """단일 소스를 수집한다. 실패해도 예외를 삼켜 다른 소스 수집을 막지 않는다 (NFR: 소스별 격리)."""
     name = source["name"]
     tier = source["tier"]
@@ -177,7 +178,7 @@ def collect_source(source, keywords, keyword_category, patterns, tier_thresholds
             continue
 
         published_at = parse_published_at(entry)
-        if is_too_old(published_at):
+        if is_too_old(published_at, cutoff):
             stale_count += 1
             continue
 
@@ -216,11 +217,17 @@ def main():
 
     before = count_items()
 
+    last_collected_at = get_last_collected_at()
+    cutoff = last_collected_at or (
+        datetime.now(timezone.utc) - timedelta(days=INITIAL_CUTOFF_FALLBACK_DAYS)
+    )
+    print(f"cutoff: {cutoff.isoformat()}" + ("" if last_collected_at else " (DB 비어있어 기본값 사용)"))
+
     all_passed_items = []
     for source in sources:
         all_passed_items.extend(
             collect_source(
-                source, keywords, keyword_category, patterns, tier_thresholds, default_threshold
+                source, keywords, keyword_category, patterns, tier_thresholds, default_threshold, cutoff
             )
         )
 

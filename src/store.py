@@ -36,6 +36,22 @@ def count_items():
     return resp.count
 
 
+def get_last_collected_at():
+    """DB에 저장된 가장 최근 collected_at. 행이 없으면 None (최초 실행)."""
+    resp = (
+        get_client()
+        .table("items")
+        .select("collected_at")
+        .order("collected_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    if not resp.data:
+        return None
+    ts = resp.data[0]["collected_at"]
+    return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+
+
 def upsert_items(items):
     """url_hash UNIQUE 제약 기반 upsert. summary/cluster/insight/relevant는 payload에서 빠져있어야
     (즉 이 함수 호출 시 items에 그 키들을 넣지 않아야) 재수집 시 기존 요약 결과를 덮어쓰지 않는다."""

@@ -55,10 +55,11 @@ export async function getAllDigestWeeks(): Promise<string[]> {
   return (data ?? []).map((row) => row.week);
 }
 
-/** published_at(피드 제공, 가끔 부정확)나 collected_at(우리가 기록, 항상 신뢰 가능) 둘 중
- * 하나라도 주차 범위에 들어오면 포함시킨다. published_at만 보면 피드가 엉뚱한 날짜를 주는
- * 글이 어느 주차에서도 안 보이는 문제가 있었음 (ISSUES.md 참고).
- * React.cache로 감싸서, 같은 요청 안에서 DigestView/사이드바가 각자 호출해도
+/** 그 주차에 "발행"된 글만 포함한다 (수집 시점이 아니라). published_at이 있으면 그것만 보고,
+ * 피드가 날짜를 아예 안 준 글(published_at 없음)에 한해서만 collected_at으로 대체한다.
+ * 예전엔 published_at/collected_at 중 하나라도 범위에 들면 포함시켰는데, 그러면 실제로는
+ * 훨씬 이전에 쓰인 글이 우연히 그 주에 수집됐다는 이유만으로 그 주차에 끼어드는 문제가 있었음
+ * (ISSUES.md 참고). React.cache로 감싸서, 같은 요청 안에서 DigestView/사이드바가 각자 호출해도
  * Supabase 쿼리는 한 번만 나간다. */
 export const getItemsForWeek = cache(async (week: string): Promise<Item[]> => {
   const { start, end } = isoWeekToRange(week);
@@ -69,11 +70,10 @@ export const getItemsForWeek = cache(async (week: string): Promise<Item[]> => {
     .order("relevance_score", { ascending: false });
 
   return (data ?? []).filter((item) => {
-    return [item.published_at, item.collected_at].some((ts) => {
-      if (!ts) return false;
-      const date = new Date(ts);
-      return date >= start && date <= end;
-    });
+    const ts = item.published_at ?? item.collected_at;
+    if (!ts) return false;
+    const date = new Date(ts);
+    return date >= start && date <= end;
   });
 });
 

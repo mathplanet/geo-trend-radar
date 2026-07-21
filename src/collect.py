@@ -4,8 +4,11 @@ REFERENCE.md §3~4 규칙을 그대로 구현.
 url_hash UNIQUE + upsert(on_conflict=url_hash)로 중복/멱등성을 DB 레벨에서 보장 (3단계, BUILD-GUIDE.md).
 """
 import hashlib
+import html
 import re
 import socket
+import time
+import urllib.request
 from datetime import datetime, timedelta, timezone
 
 import feedparser
@@ -26,6 +29,50 @@ FEED_TIMEOUT_SECONDS = 15
 MAX_PUBLISHED_AGE_DAYS = 1
 
 TAG_RE = re.compile(r"<[^<]+?>")
+
+# --- Anthropic News: 공식 RSS가 없어 뉴스 목록 페이지를 직접 스크래핑한다.
+# 사이트 마크업(클래스명 등)이 바뀌면 이 정규식도 같이 깨질 수 있음.
+ANTHROPIC_NEWS_URL = "https://www.anthropic.com/news"
+ANTHROPIC_NEWS_ITEM_RE = re.compile(
+    r'<a href="(/news/[a-z0-9-]+)" class="PublicationList[^"]*listItem">'
+    r'.*?<time[^>]*>([^<]+)</time>'
+    r'.*?<span class="[^"]*title[^"]*"[^>]*>([^<]+)</span>'
+    r"</a>",
+    re.DOTALL,
+)
+
+
+def scrape_anthropic_news():
+    """뉴스 목록 페이지에서 최근 항목(보통 10개)을 파싱해 feedparser 엔트리와 같은 모양의
+    dict 목록으로 반환한다 (title/summary/link/published_parsed). 목록 페이지엔 본문 요약이
+    없어 summary는 빈 문자열 - 키워드 매칭은 제목만으로 이뤄진다."""
+    req = urllib.request.Request(
+        ANTHROPIC_NEWS_URL,
+        headers={"User-Agent": "Mozilla/5.0 (compatible; GeoTrendRadar/1.0)"},
+    )
+    with urllib.request.urlopen(req, timeout=FEED_TIMEOUT_SECONDS) as resp:
+        body = resp.read().decode("utf-8")
+
+    entries = []
+    for slug, date_str, title in ANTHROPIC_NEWS_ITEM_RE.findall(body):
+        try:
+            published_parsed = time.strptime(date_str.strip(), "%b %d, %Y")
+        except ValueError:
+            published_parsed = None
+        entries.append(
+            {
+                "title": html.unescape(title.strip()),
+                "summary": "",
+                "link": "https://www.anthropic.com" + slug,
+                "published_parsed": published_parsed,
+            }
+        )
+    return entries
+
+
+SCRAPERS = {
+    "anthropic_news": scrape_anthropic_news,
+}
 
 
 def load_sources():
@@ -102,15 +149,17 @@ def collect_source(source, keywords, keyword_category, patterns, tier_thresholds
     threshold = resolve_threshold(source, tier_thresholds, default_threshold)
 
     try:
-        feed = feedparser.parse(source["feed_url"])
+        if "scraper" in source:
+            entries = SCRAPERS[source["scraper"]]()
+        else:
+            entries = feedparser.parse(source["feed_url"]).entries or []
     except Exception as e:
-        print(f"[실패] {name}: 피드 파싱 에러 - {e}")
+        print(f"[실패] {name}: 수집 에러 - {e}")
         return []
 
-    entries = feed.entries or []
     total = len(entries)
     if total == 0:
-        print(f"[{tier}] {name}: 엔트리 0 - 피드 URL 확인 필요")
+        print(f"[{tier}] {name}: 엔트리 0 - 수집 대상 확인 필요")
         return []
 
     passed_items = []

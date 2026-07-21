@@ -54,6 +54,11 @@ sources:
     feed_url: https://openai.com/news/rss.xml
     tier: broad
 
+  # 공식 RSS가 없어서 뉴스 목록 페이지를 직접 스크래핑 (collect.py의 scrape_anthropic_news 참고)
+  - name: Anthropic News
+    scraper: anthropic_news
+    tier: broad
+
   - name: Reddit r/SEO
     feed_url: https://www.reddit.com/r/SEO/.rss
     tier: broad

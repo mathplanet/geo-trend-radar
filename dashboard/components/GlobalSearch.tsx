@@ -61,7 +61,16 @@ export default function GlobalSearch({ items }: { items: Item[] }) {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2 border-b border-neutral-200 pb-3 dark:border-neutral-800">
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="제목·요약 검색..."
+        autoFocus
+        className="w-full rounded-lg border border-neutral-300 bg-white px-4 py-3 text-base text-neutral-900 placeholder:text-neutral-400 focus:border-indigo-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+      />
+
+      <div className="mt-4 flex flex-wrap gap-2 border-b border-neutral-200 pb-3 dark:border-neutral-800">
         {tabs.map((tab) => (
           <button
             key={tab}
@@ -115,15 +124,6 @@ export default function GlobalSearch({ items }: { items: Item[] }) {
           </button>
         )}
       </div>
-
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="제목·요약 검색..."
-        autoFocus
-        className="mt-4 w-full rounded-lg border border-neutral-300 bg-white px-4 py-3 text-base text-neutral-900 placeholder:text-neutral-400 focus:border-indigo-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-      />
 
       {results.length === 0 ? (
         <p className="mt-6 text-neutral-500 dark:text-neutral-400">검색 결과가 없습니다.</p>

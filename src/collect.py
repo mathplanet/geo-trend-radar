@@ -135,9 +135,10 @@ def parse_published_at(entry):
 
 def is_too_old(published_at):
     """published_at이 있는데 수집 시점 기준 MAX_PUBLISHED_AGE_DAYS보다 오래됐으면 True.
-    날짜 정보가 아예 없으면(None) 판단을 보류하고 False(제외하지 않음)를 반환한다."""
+    실제 게재일이 트렌드 판단의 핵심이라, 날짜 정보가 아예 없는 글(None)도 오래된 것과 동일하게
+    제외한다 (판단 보류로 그냥 통과시켰다가 몇 달 전 글이 최신인 것처럼 섞여 들어간 사고가 있었음)."""
     if not published_at:
-        return False
+        return True
     dt = datetime.fromisoformat(published_at)
     return dt < datetime.now(timezone.utc) - timedelta(days=MAX_PUBLISHED_AGE_DAYS)
 

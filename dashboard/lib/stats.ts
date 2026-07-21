@@ -51,7 +51,7 @@ export function getCategoryColor(category: string): { light: string; dark: strin
   return CATEGORY_COLORS[index];
 }
 
-function toIsoWeekLabel(date: Date): string {
+export function toIsoWeekLabel(date: Date): string {
   const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
@@ -98,6 +98,14 @@ export function aggregateByCategory(items: StatsItem[], granularity: Granularity
   }
 
   return [...buckets.values()].sort((a, b) => a.key.localeCompare(b.key));
+}
+
+/** 검색 결과 등에서 "어느 주차 글인지" 표시하기 위한 라벨. 그 주에 실제 digest가
+ * 발행됐는지와 무관하게 순수 날짜만으로 ISO 주차를 계산한다. */
+export function itemWeekLabel(item: Pick<Item, "published_at" | "collected_at">): string | null {
+  const ts = item.published_at ?? item.collected_at;
+  if (!ts) return null;
+  return toIsoWeekLabel(new Date(ts));
 }
 
 export function getActiveCategories(buckets: Bucket[]): string[] {

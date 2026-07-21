@@ -86,3 +86,13 @@ export async function getAllItemsForStats(): Promise<StatsItem[]> {
   return data ?? [];
 }
 
+/** 전역 검색용 전체 items (주차 제한 없이 전 기간 대상). */
+export async function getAllItemsForSearch(): Promise<Item[]> {
+  const { data } = await supabase
+    .from("items")
+    .select("*")
+    .or(`relevant.is.null,relevant.eq.true`)
+    .order("relevance_score", { ascending: false });
+  return data ?? [];
+}
+

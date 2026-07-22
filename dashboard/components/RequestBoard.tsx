@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { RequestItem, RequestStatus } from "@/lib/types";
@@ -37,6 +38,7 @@ function formatDate(ts: string): string {
 }
 
 export default function RequestBoard({ initialRequests }: { initialRequests: RequestItem[] }) {
+  const router = useRouter();
   const [requests, setRequests] = useState(initialRequests);
   const [content, setContent] = useState("");
   const [author, setAuthor] = useState("");
@@ -60,11 +62,13 @@ export default function RequestBoard({ initialRequests }: { initialRequests: Req
     if (error || !data) return;
     setRequests((prev) => [data, ...prev]);
     setContent("");
+    router.refresh();
   }
 
   async function handleStatusChange(id: number, status: RequestStatus) {
     setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
     await supabase.from("requests").update({ status }).eq("id", id);
+    router.refresh();
   }
 
   function startEdit(r: RequestItem) {
@@ -83,12 +87,14 @@ export default function RequestBoard({ initialRequests }: { initialRequests: Req
     setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, content: trimmed } : r)));
     setEditingId(null);
     await supabase.from("requests").update({ content: trimmed }).eq("id", id);
+    router.refresh();
   }
 
   async function handleDelete(id: number) {
     if (!window.confirm("이 요청을 삭제할까요?")) return;
     setRequests((prev) => prev.filter((r) => r.id !== id));
     await supabase.from("requests").delete().eq("id", id);
+    router.refresh();
   }
 
   return (

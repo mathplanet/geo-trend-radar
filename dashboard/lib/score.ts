@@ -1,6 +1,7 @@
 export type ScoreBand = {
   label: string;
   badgeClass: string;
+  borderClass: string;
 };
 
 /** keywords.yaml의 가중치 합산 점수를 사람이 읽을 수 있는 등급으로 변환.
@@ -11,6 +12,7 @@ export function getScoreBand(score: number | null): ScoreBand {
     return {
       label: "매우 높음",
       badgeClass: "bg-indigo-600 text-white dark:bg-indigo-500",
+      borderClass: "border-l-indigo-600 dark:border-l-indigo-400",
     };
   }
   if (value >= 5) {
@@ -18,12 +20,14 @@ export function getScoreBand(score: number | null): ScoreBand {
       label: "높음",
       badgeClass:
         "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300",
+      borderClass: "border-l-indigo-300 dark:border-l-indigo-700",
     };
   }
   return {
     label: "보통",
     badgeClass:
       "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300",
+    borderClass: "border-l-neutral-200 dark:border-l-neutral-700",
   };
 }
 

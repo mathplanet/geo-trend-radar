@@ -18,7 +18,9 @@ export default function ItemCard({ item }: { item: Item }) {
   const band = getScoreBand(item.relevance_score);
 
   return (
-    <article className="group rounded-xl border border-neutral-200 bg-white p-4 transition-shadow hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900">
+    <article
+      className={`group rounded-xl border border-l-4 border-neutral-200 bg-white p-4 transition-shadow hover:shadow-md dark:border-neutral-800 ${band.borderClass} dark:bg-neutral-900`}
+    >
       <div className="flex items-start justify-between gap-3">
         <a
           href={item.url}

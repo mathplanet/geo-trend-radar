@@ -299,14 +299,15 @@ create table requests (
 > (`for select using (true)`)을 추가해야 대시보드(anon 키)가 조회할 수 있다. 자세한 사연은
 > [`ISSUES.md`](./ISSUES.md) 3단계 항목 참고.
 >
-> **`requests`는 예외적으로 anon 쓰기까지 허용**한다 (12명 규모 사내 도구, 신뢰 기반 - 인증 없이
-> 대시보드에서 누구나 요청을 등록하고 상태를 바꿀 수 있게 하는 게 목적). select/insert/update
-> 정책을 모두 `using (true)`로 열되, delete 정책은 만들지 않아 삭제만은 막는다:
+> **`requests`는 예외적으로 anon 쓰기(수정·삭제 포함)까지 전부 허용**한다 (12명 규모 사내 도구,
+> 신뢰 기반 - 인증 없이 대시보드에서 누구나 요청을 등록·수정·삭제하고 상태를 바꿀 수 있게 하는
+> 게 목적. 남용 리스크보다 인증 붙이는 복잡도가 더 크다고 판단):
 > ```sql
 > alter table requests enable row level security;
 > create policy "requests_select_anon" on requests for select using (true);
 > create policy "requests_insert_anon" on requests for insert with check (true);
 > create policy "requests_update_anon" on requests for update using (true) with check (true);
+> create policy "requests_delete_anon" on requests for delete using (true);
 > ```
 
 ## 6. 프로토타입 산출물 (참고 구현)

@@ -6,6 +6,26 @@ import type { RequestItem, RequestStatus } from "@/lib/types";
 
 const STATUSES: RequestStatus[] = ["요청", "진행 중", "완료"];
 
+/** 상태별 색상. 요청=중립(아직 미착수), 진행 중=amber, 완료=emerald(DigestView의 "최신"
+ * 배지와 동일 계열 - "긍정적으로 끝남" 의미 재사용). */
+const STATUS_STYLE: Record<RequestStatus, { dot: string; border: string; badge: string }> = {
+  요청: {
+    dot: "bg-neutral-400 dark:bg-neutral-500",
+    border: "border-l-neutral-300 dark:border-l-neutral-600",
+    badge: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300",
+  },
+  "진행 중": {
+    dot: "bg-amber-400 dark:bg-amber-500",
+    border: "border-l-amber-400 dark:border-l-amber-500",
+    badge: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  },
+  완료: {
+    dot: "bg-emerald-500",
+    border: "border-l-emerald-400 dark:border-l-emerald-500",
+    badge: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+  },
+};
+
 function formatDate(ts: string): string {
   // ItemCard.tsx와 동일한 이유로 timeZone 명시 (서버/클라이언트 타임존 차이로 인한
   // 하이드레이션 불일치 방지, React #418).
@@ -108,6 +128,7 @@ export default function RequestBoard({ initialRequests }: { initialRequests: Req
           return (
             <section key={status}>
               <h2 className="flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_STYLE[status].dot}`} />
                 {status}
                 <span className="font-normal text-neutral-400 dark:text-neutral-500">
                   {columnItems.length}건
@@ -117,7 +138,7 @@ export default function RequestBoard({ initialRequests }: { initialRequests: Req
                 {columnItems.map((r) => (
                   <div
                     key={r.id}
-                    className="rounded-lg border border-neutral-200 bg-white p-3 text-sm dark:border-neutral-800 dark:bg-neutral-900"
+                    className={`rounded-lg border border-l-4 border-neutral-200 bg-white p-3 text-sm dark:border-neutral-800 ${STATUS_STYLE[r.status].border} dark:bg-neutral-900`}
                   >
                     {editingId === r.id ? (
                       <div className="space-y-2">
@@ -175,7 +196,7 @@ export default function RequestBoard({ initialRequests }: { initialRequests: Req
                           onChange={(e) =>
                             handleStatusChange(r.id, e.target.value as RequestStatus)
                           }
-                          className="rounded border border-neutral-300 bg-white px-1.5 py-0.5 text-xs text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                          className={`rounded-full border-0 px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[r.status].badge}`}
                         >
                           {STATUSES.map((s) => (
                             <option key={s} value={s}>

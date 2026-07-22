@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { supabase } from "./supabase";
 import type { StatsItem } from "./stats";
-import type { Digest, Item } from "./types";
+import type { Digest, Item, RequestItem } from "./types";
 
 /** ISO 8601 주차 문자열("2026-W29", collect.py의 "%G-W%V"와 동일 규칙)을
  * 해당 주의 [월요일 00:00, 일요일 23:59:59] UTC 범위로 변환한다. */
@@ -93,6 +93,15 @@ export async function getAllItemsForSearch(): Promise<Item[]> {
     .select("*")
     .or(`relevant.is.null,relevant.eq.true`)
     .order("relevance_score", { ascending: false });
+  return data ?? [];
+}
+
+/** '요청' 탭용 전체 요청 목록. 등록/상태변경은 클라이언트(RequestBoard)가 anon 키로 직접 처리. */
+export async function getAllRequests(): Promise<RequestItem[]> {
+  const { data } = await supabase
+    .from("requests")
+    .select("*")
+    .order("created_at", { ascending: false });
   return data ?? [];
 }
 

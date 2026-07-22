@@ -281,6 +281,15 @@ create table digests (
 create index items_published_idx on items (published_at desc);
 create index items_cluster_idx on items (cluster);
 create index items_categories_idx on items using gin (categories);
+
+create table requests (
+  id         bigint generated always as identity primary key,
+  content    text not null,
+  author     text,                                 -- 작성자 이름(선택, 익명 허용)
+  status     text not null default '요청'
+             check (status in ('요청', '진행 중', '완료')),
+  created_at timestamptz default now()
+);
 ```
 
 > 참고: v1은 `sources.yaml`을 소스 원본(source of truth)으로 두고, `sources` 테이블은
@@ -289,6 +298,16 @@ create index items_categories_idx on items using gin (categories);
 > **RLS 필수**: `items`, `digests` 모두 `enable row level security` 후 anon 읽기 정책
 > (`for select using (true)`)을 추가해야 대시보드(anon 키)가 조회할 수 있다. 자세한 사연은
 > [`ISSUES.md`](./ISSUES.md) 3단계 항목 참고.
+>
+> **`requests`는 예외적으로 anon 쓰기까지 허용**한다 (12명 규모 사내 도구, 신뢰 기반 - 인증 없이
+> 대시보드에서 누구나 요청을 등록하고 상태를 바꿀 수 있게 하는 게 목적). select/insert/update
+> 정책을 모두 `using (true)`로 열되, delete 정책은 만들지 않아 삭제만은 막는다:
+> ```sql
+> alter table requests enable row level security;
+> create policy "requests_select_anon" on requests for select using (true);
+> create policy "requests_insert_anon" on requests for insert with check (true);
+> create policy "requests_update_anon" on requests for update using (true) with check (true);
+> ```
 
 ## 6. 프로토타입 산출물 (참고 구현)
 

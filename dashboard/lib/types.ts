@@ -25,3 +25,13 @@ export type Digest = {
   category_insights: Record<string, string> | null;
   created_at: string;
 };
+
+export type RequestStatus = "요청" | "진행 중" | "완료";
+
+export type RequestItem = {
+  id: number;
+  content: string;
+  author: string | null;
+  status: RequestStatus;
+  created_at: string;
+};

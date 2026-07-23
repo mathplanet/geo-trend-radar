@@ -1,3 +1,10 @@
+export function parseBulletLines(text: string): string[] {
+  return text
+    .split("\n")
+    .map((line) => line.replace(/^[-•]\s*/, "").trim())
+    .filter(Boolean);
+}
+
 export default function BulletList({
   text,
   className = "",
@@ -5,10 +12,7 @@ export default function BulletList({
   text: string;
   className?: string;
 }) {
-  const lines = text
-    .split("\n")
-    .map((line) => line.replace(/^[-•]\s*/, "").trim())
-    .filter(Boolean);
+  const lines = parseBulletLines(text);
 
   return (
     <ul className={`space-y-1 ${className}`}>

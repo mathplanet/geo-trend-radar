@@ -1,5 +1,6 @@
 import type { Item } from "@/lib/types";
-import BulletList from "./BulletList";
+import BulletList, { parseBulletLines } from "./BulletList";
+import CopyButton from "./CopyButton";
 import { getScoreBand } from "@/lib/score";
 
 function formatDate(ts: string | null): string {
@@ -12,6 +13,19 @@ function formatDate(ts: string | null): string {
     day: "2-digit",
     timeZone: "Asia/Seoul",
   });
+}
+
+/** 클라이언트 자료에 바로 붙여넣기 좋은 형태로 정리 (제목 → 요약 불릿 → 시사점 → 출처). */
+function buildCopyText(item: Item): string {
+  const lines = [item.title];
+  if (item.summary) {
+    lines.push(...parseBulletLines(item.summary).map((line) => `- ${line}`));
+  }
+  if (item.insight) {
+    lines.push(`→ ${item.insight}`);
+  }
+  lines.push(`(출처: ${item.source ?? "출처 미상"}, ${item.url})`);
+  return lines.join("\n");
 }
 
 export default function ItemCard({ item }: { item: Item }) {
@@ -37,9 +51,12 @@ export default function ItemCard({ item }: { item: Item }) {
           {band.label} · {item.relevance_score ?? "-"}
         </span>
       </div>
-      <p className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-        {item.source ?? "출처 미상"} · {formatDate(item.published_at ?? item.collected_at)}
-      </p>
+      <div className="mt-1.5 flex items-center justify-between gap-2">
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          {item.source ?? "출처 미상"} · {formatDate(item.published_at ?? item.collected_at)}
+        </p>
+        <CopyButton text={buildCopyText(item)} />
+      </div>
       {item.summary && (
         <BulletList
           text={item.summary}

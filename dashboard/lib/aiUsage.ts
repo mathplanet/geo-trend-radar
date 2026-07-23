@@ -42,17 +42,19 @@ export function getProviderColor(label: string): { light: string; dark: string }
 export type UsageBucket = {
   week: string;
   shares: Record<string, number>;
+  tokens: Record<string, number>;
 };
 
 export function aggregateUsageByWeek(rows: AiUsageRow[]): UsageBucket[] {
   const byWeek = new Map<string, UsageBucket>();
   for (const row of rows) {
     if (!byWeek.has(row.week)) {
-      byWeek.set(row.week, { week: row.week, shares: {} });
+      byWeek.set(row.week, { week: row.week, shares: {}, tokens: {} });
     }
     const bucket = byWeek.get(row.week)!;
     const label = providerLabel(row.provider);
     bucket.shares[label] = (bucket.shares[label] ?? 0) + row.share_pct;
+    bucket.tokens[label] = (bucket.tokens[label] ?? 0) + row.total_tokens;
   }
   return [...byWeek.values()].sort((a, b) => a.week.localeCompare(b.week));
 }

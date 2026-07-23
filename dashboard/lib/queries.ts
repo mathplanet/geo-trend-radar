@@ -77,12 +77,13 @@ export const getItemsForWeek = cache(async (week: string): Promise<Item[]> => {
   });
 });
 
-/** 통계 페이지(수집 현황)용 전체 items. 대시보드 본문과 동일하게 relevant=false(노이즈)는 제외. */
+/** 통계 페이지(수집 현황)용 전체 items. 소스별 노이즈 비율을 보려면 relevant=false 행도
+ * 필요해서(다른 화면과 달리) 여기서는 필터링하지 않는다 - "노이즈 제외"가 필요한 집계
+ * (카테고리별 차트 등)는 lib/stats.ts의 각 aggregate 함수가 알아서 걸러낸다. */
 export async function getAllItemsForStats(): Promise<StatsItem[]> {
   const { data } = await supabase
     .from("items")
-    .select("collected_at, published_at, categories")
-    .or(`relevant.is.null,relevant.eq.true`);
+    .select("collected_at, published_at, categories, source, tier, relevance_score, relevant, matched_keywords");
   return data ?? [];
 }
 

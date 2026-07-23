@@ -1,6 +1,22 @@
 import type { Item } from "./types";
 
-export type StatsItem = Pick<Item, "collected_at" | "published_at" | "categories">;
+export type StatsItem = Pick<
+  Item,
+  | "collected_at"
+  | "published_at"
+  | "categories"
+  | "source"
+  | "tier"
+  | "relevance_score"
+  | "relevant"
+  | "matched_keywords"
+>;
+
+/** relevant=false는 Claude가 주간 배치에서 "노이즈"로 재평가한 글. 아직 재평가 전(null)은
+ * 노이즈가 아닌 것으로 취급 (다른 화면들과 동일 규칙, queries.ts의 relevant 필터 참고). */
+function isNotNoise(item: Pick<StatsItem, "relevant">): boolean {
+  return item.relevant !== false;
+}
 
 export type Granularity = "week" | "day";
 
@@ -86,6 +102,7 @@ export function aggregateByCategory(items: StatsItem[], granularity: Granularity
   const buckets = new Map<string, Bucket>();
 
   for (const item of items) {
+    if (!isNotNoise(item)) continue;
     const key = bucketKey(item, granularity);
     if (!key) continue;
     if (!buckets.has(key)) buckets.set(key, { key, label: key, counts: {}, total: 0 });
@@ -116,4 +133,95 @@ export function getActiveCategories(buckets: Bucket[]): string[] {
   }
   const ordered = CATEGORY_ORDER.filter((c) => present.has(c));
   return present.has(OTHER_LABEL) ? [...ordered, OTHER_LABEL] : ordered;
+}
+
+export type SourceStat = {
+  source: string;
+  tier: string | null;
+  total: number;
+  noiseCount: number;
+  noisePct: number;
+  avgScore: number;
+};
+
+/** 소스별 수집 건수·노이즈(Claude가 relevant=false로 재평가한) 비율·평균 관련도 점수.
+ * 노이즈 비율을 봐야 하니 aggregateByCategory와 달리 노이즈를 걸러내지 않고 전부 집계한다. */
+export function aggregateBySource(items: StatsItem[]): SourceStat[] {
+  const bySource = new Map<
+    string,
+    { tier: string | null; total: number; noiseCount: number; scoreSum: number }
+  >();
+
+  for (const item of items) {
+    const source = item.source ?? "출처 미상";
+    if (!bySource.has(source)) {
+      bySource.set(source, { tier: item.tier, total: 0, noiseCount: 0, scoreSum: 0 });
+    }
+    const entry = bySource.get(source)!;
+    entry.total += 1;
+    if (item.relevant === false) entry.noiseCount += 1;
+    entry.scoreSum += item.relevance_score ?? 0;
+  }
+
+  return [...bySource.entries()]
+    .map(([source, e]) => ({
+      source,
+      tier: e.tier,
+      total: e.total,
+      noiseCount: e.noiseCount,
+      noisePct: e.total > 0 ? (e.noiseCount / e.total) * 100 : 0,
+      avgScore: e.total > 0 ? e.scoreSum / e.total : 0,
+    }))
+    .sort((a, b) => b.total - a.total);
+}
+
+export type KeywordTrendRow = {
+  keyword: string;
+  thisWeek: number;
+  lastWeek: number;
+  delta: number;
+};
+
+export type KeywordTrend = {
+  thisWeekLabel: string | null;
+  lastWeekLabel: string | null;
+  rows: KeywordTrendRow[];
+};
+
+/** 최근 두 주(published_at 기준, 다른 화면들과 동일 규칙)의 matched_keywords 등장 횟수를 비교해
+ * 이번 주 상위 키워드와 전주 대비 증감을 계산한다. 노이즈(relevant=false)로 재평가된 글은 제외. */
+export function aggregateKeywordTrend(items: StatsItem[], limit = 15): KeywordTrend {
+  const byWeek = new Map<string, Map<string, number>>();
+
+  for (const item of items) {
+    if (!isNotNoise(item)) continue;
+    const ts = item.published_at ?? item.collected_at;
+    if (!ts) continue;
+    const week = toIsoWeekLabel(new Date(ts));
+    if (!byWeek.has(week)) byWeek.set(week, new Map());
+    const counts = byWeek.get(week)!;
+    for (const keyword of item.matched_keywords ?? []) {
+      counts.set(keyword, (counts.get(keyword) ?? 0) + 1);
+    }
+  }
+
+  const weeks = [...byWeek.keys()].sort();
+  if (weeks.length === 0) return { thisWeekLabel: null, lastWeekLabel: null, rows: [] };
+
+  const thisWeekLabel = weeks[weeks.length - 1];
+  const lastWeekLabel = weeks.length > 1 ? weeks[weeks.length - 2] : null;
+  const thisWeekCounts = byWeek.get(thisWeekLabel)!;
+  const lastWeekCounts = lastWeekLabel ? byWeek.get(lastWeekLabel)! : new Map<string, number>();
+
+  const rows = [...thisWeekCounts.entries()]
+    .map(([keyword, count]) => ({
+      keyword,
+      thisWeek: count,
+      lastWeek: lastWeekCounts.get(keyword) ?? 0,
+      delta: count - (lastWeekCounts.get(keyword) ?? 0),
+    }))
+    .sort((a, b) => b.thisWeek - a.thisWeek)
+    .slice(0, limit);
+
+  return { thisWeekLabel, lastWeekLabel, rows };
 }

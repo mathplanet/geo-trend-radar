@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { providerLabel } from "@/lib/aiUsage";
+import { providerLabel, providerSlugRank } from "@/lib/aiUsage";
 import type { ActiveModel } from "@/lib/types";
 
 function formatDate(ts: string | null): string {
@@ -29,27 +29,31 @@ function formatModality(modality: string | null): string {
   return `${input?.replaceAll("+", " + ")} 입력 → ${output?.replaceAll("+", " + ")} 출력`;
 }
 
-function groupByProvider(models: ActiveModel[]): Map<string, ActiveModel[]> {
+function groupByProvider(models: ActiveModel[]): [string, ActiveModel[]][] {
   const byProvider = new Map<string, ActiveModel[]>();
   for (const model of models) {
     const list = byProvider.get(model.provider) ?? [];
     list.push(model);
     byProvider.set(model.provider, list);
   }
-  return byProvider;
+  // released_at 기준 전역 정렬로 생긴 Map의 첫 등장 순서를 그대로 쓰면 "메인 3사가 먼저"라는
+  // 순서 요구를 못 지킨다 - providerSlugRank로 명시적으로 재정렬.
+  return [...byProvider.entries()].sort(
+    ([a], [b]) => providerSlugRank(a) - providerSlugRank(b)
+  );
 }
 
 export default function ActiveModelsList({ models }: { models: ActiveModel[] }) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const byProvider = groupByProvider(models);
 
-  if (byProvider.size === 0) {
+  if (byProvider.length === 0) {
     return <p className="text-neutral-500 dark:text-neutral-400">아직 수집된 데이터가 없습니다.</p>;
   }
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {[...byProvider.entries()].map(([provider, providerModels]) => (
+      {byProvider.map(([provider, providerModels]) => (
         <div
           key={provider}
           className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"

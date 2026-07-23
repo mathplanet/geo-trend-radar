@@ -60,13 +60,18 @@ export async function getAllDigestWeeks(): Promise<string[]> {
  * 예전엔 published_at/collected_at 중 하나라도 범위에 들면 포함시켰는데, 그러면 실제로는
  * 훨씬 이전에 쓰인 글이 우연히 그 주에 수집됐다는 이유만으로 그 주차에 끼어드는 문제가 있었음
  * (ISSUES.md 참고). React.cache로 감싸서, 같은 요청 안에서 DigestView/사이드바가 각자 호출해도
- * Supabase 쿼리는 한 번만 나간다. */
+ * Supabase 쿼리는 한 번만 나간다.
+ *
+ * summary가 없는 글(격일 수집은 계속 도는데 요약은 주 1회 배치라, 다음 배치 전까지 그 사이
+ * 수집된 글은 아직 요약 전)은 제외한다 - 안 그러면 클러스터도 없어서 다이제스트 화면에
+ * "미분류"로 어중간하게 섞여 보임. */
 export const getItemsForWeek = cache(async (week: string): Promise<Item[]> => {
   const { start, end } = isoWeekToRange(week);
   const { data } = await supabase
     .from("items")
     .select("*")
     .or(`relevant.is.null,relevant.eq.true`)
+    .not("summary", "is", null)
     .order("relevance_score", { ascending: false });
 
   return (data ?? []).filter((item) => {

@@ -88,6 +88,21 @@ def upsert_digest(week, headline_item_ids, overview, category_insights=None):
     }, on_conflict="week").execute()
 
 
+def upsert_ai_usage(rows):
+    """(week, provider) UNIQUE 제약 기반 upsert. rows: [{week, provider, total_tokens, share_pct}, ...]"""
+    if not rows:
+        return
+    get_client().table("ai_usage").upsert(rows, on_conflict="week,provider").execute()
+
+
+def replace_active_models(provider_slugs, rows):
+    """provider_slugs 범위의 기존 행을 전부 지우고 rows로 교체한다 (단종/개명된 모델이 안 남게)."""
+    client = get_client()
+    client.table("ai_active_models").delete().in_("provider", list(provider_slugs)).execute()
+    if rows:
+        client.table("ai_active_models").insert(rows).execute()
+
+
 def within_window(item, days):
     """published_at(피드 제공, 가끔 부정확/오래됨)나 collected_at(우리가 기록, 항상 신뢰 가능)
     둘 중 하나라도 최근 N일 이내면 포함시킨다. published_at만 믿으면 피드가 잘못된 날짜를 주는

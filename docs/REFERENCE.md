@@ -290,6 +290,25 @@ create table requests (
              check (status in ('요청', '진행 중', '완료')),
   created_at timestamptz default now()
 );
+
+create table ai_usage (
+  id           bigint generated always as identity primary key,
+  week         text not null,                       -- '2026-W29' 형식, digests.week와 동일 규칙
+  provider     text not null,                        -- 모델 슬러그의 "/" 앞부분 (anthropic, openai, ...)
+  total_tokens bigint not null,
+  share_pct    numeric not null,
+  created_at   timestamptz default now(),
+  unique (week, provider)
+);
+
+create table ai_active_models (
+  id          bigint generated always as identity primary key,
+  provider    text not null,
+  model_id    text not null unique,                  -- OpenRouter 모델 슬러그
+  name        text not null,
+  released_at timestamptz,
+  fetched_at  timestamptz default now()
+);
 ```
 
 > 참고: v1은 `sources.yaml`을 소스 원본(source of truth)으로 두고, `sources` 테이블은
@@ -308,6 +327,16 @@ create table requests (
 > create policy "requests_insert_anon" on requests for insert with check (true);
 > create policy "requests_update_anon" on requests for update using (true) with check (true);
 > create policy "requests_delete_anon" on requests for delete using (true);
+> ```
+>
+> **`ai_usage`/`ai_active_models`는 `items`/`digests`와 동일하게 읽기만 공개**한다 (쓰기는
+> `src/collect_ai_usage.py`가 매주 service_role로만):
+> ```sql
+> alter table ai_usage enable row level security;
+> create policy "ai_usage_select_anon" on ai_usage for select using (true);
+>
+> alter table ai_active_models enable row level security;
+> create policy "ai_active_models_select_anon" on ai_active_models for select using (true);
 > ```
 
 ## 6. 프로토타입 산출물 (참고 구현)

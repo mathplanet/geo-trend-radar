@@ -35,3 +35,21 @@ export type RequestItem = {
   status: RequestStatus;
   created_at: string;
 };
+
+export type AiUsageRow = {
+  id: number;
+  week: string;
+  provider: string;
+  total_tokens: number;
+  share_pct: number;
+  created_at: string;
+};
+
+export type ActiveModel = {
+  id: number;
+  provider: string;
+  model_id: string;
+  name: string;
+  released_at: string | null;
+  fetched_at: string;
+};

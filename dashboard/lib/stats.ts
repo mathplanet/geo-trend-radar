@@ -32,8 +32,9 @@ export const CATEGORY_ORDER = [
 export const OTHER_LABEL = "기타";
 const MAX_COLORED_CATEGORIES = 8;
 
-/** dataviz 레퍼런스 팔레트의 8개 categorical 슬롯 (고정 순서 - 인접쌍 CVD 검증된 순서, 절대 재배열 금지). */
-const CATEGORY_COLORS = [
+/** dataviz 레퍼런스 팔레트의 8개 categorical 슬롯 (고정 순서 - 인접쌍 CVD 검증된 순서, 절대 재배열 금지).
+ * lib/aiUsage.ts도 동일한 팔레트를 재사용해 앱 전체 시각 언어를 통일한다. */
+export const CATEGORY_COLORS = [
   { light: "#2a78d6", dark: "#3987e5" }, // blue
   { light: "#008300", dark: "#008300" }, // green
   { light: "#e87ba4", dark: "#d55181" }, // magenta
@@ -43,7 +44,7 @@ const CATEGORY_COLORS = [
   { light: "#4a3aa7", dark: "#9085e9" }, // violet
   { light: "#e34948", dark: "#e66767" }, // red
 ];
-const OTHER_COLOR = { light: "#898781", dark: "#898781" };
+export const OTHER_COLOR = { light: "#898781", dark: "#898781" };
 
 export function getCategoryColor(category: string): { light: string; dark: string } {
   const index = CATEGORY_ORDER.indexOf(category);

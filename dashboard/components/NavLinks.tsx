@@ -7,6 +7,7 @@ const LINKS = [
   { href: "/", label: "다이제스트" },
   { href: "/search", label: "검색" },
   { href: "/stats", label: "수집 현황" },
+  { href: "/ai-usage", label: "AI 서비스" },
   { href: "/requests", label: "요청" },
 ];
 

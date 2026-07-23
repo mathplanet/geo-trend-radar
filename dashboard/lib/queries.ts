@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { supabase } from "./supabase";
 import type { StatsItem } from "./stats";
-import type { Digest, Item, RequestItem } from "./types";
+import type { ActiveModel, AiUsageRow, Digest, Item, RequestItem } from "./types";
 
 /** ISO 8601 주차 문자열("2026-W29", collect.py의 "%G-W%V"와 동일 규칙)을
  * 해당 주의 [월요일 00:00, 일요일 23:59:59] UTC 범위로 변환한다. */
@@ -102,6 +102,24 @@ export async function getAllRequests(): Promise<RequestItem[]> {
     .from("requests")
     .select("*")
     .order("created_at", { ascending: false });
+  return data ?? [];
+}
+
+/** 'AI 서비스' 탭용 주간 사용 비중 추이. src/collect_ai_usage.py가 매주 채움. */
+export async function getAiUsageTrend(): Promise<AiUsageRow[]> {
+  const { data } = await supabase
+    .from("ai_usage")
+    .select("*")
+    .order("week", { ascending: true });
+  return data ?? [];
+}
+
+/** 'AI 서비스' 탭용 현재 활성 모델 목록. 매주 전체 교체되므로 항상 최신 스냅샷. */
+export async function getActiveModels(): Promise<ActiveModel[]> {
+  const { data } = await supabase
+    .from("ai_active_models")
+    .select("*")
+    .order("released_at", { ascending: false });
   return data ?? [];
 }
 

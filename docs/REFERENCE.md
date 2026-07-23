@@ -307,7 +307,8 @@ create table ai_active_models (
   model_id    text not null unique,                  -- OpenRouter 모델 슬러그
   name        text not null,
   released_at timestamptz,
-  fetched_at  timestamptz default now()
+  fetched_at  timestamptz default now(),
+  details     jsonb                                  -- context_length/pricing/modality/knowledge_cutoff/reasoning_supported (클릭 시 펼침용, benchmarks는 구조가 커서 제외)
 );
 ```
 

@@ -60,6 +60,23 @@ def aggregate_this_week(rows):
     return totals
 
 
+def build_details(m):
+    """상세 보기(클릭 시 펼침)용 부가 정보. benchmarks는 구조가 커서 일부러 뺀다."""
+    pricing = m.get("pricing") or {}
+    architecture = m.get("architecture") or {}
+    return {
+        "context_length": m.get("context_length"),
+        "pricing": {
+            "prompt": pricing.get("prompt"),
+            "completion": pricing.get("completion"),
+        },
+        "modality": architecture.get("modality"),
+        "knowledge_cutoff": m.get("knowledge_cutoff"),
+        # reasoning 키 자체가 추론 모델에만 존재하고, 나머지는 아예 없음 (직접 확인함).
+        "reasoning_supported": "reasoning" in m,
+    }
+
+
 def sync_active_models(models):
     rows = []
     for m in models:
@@ -77,6 +94,7 @@ def sync_active_models(models):
                     if created
                     else None
                 ),
+                "details": build_details(m),
             }
         )
     replace_active_models(TRACKED_PROVIDERS, rows)

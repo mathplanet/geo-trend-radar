@@ -45,6 +45,14 @@ export type AiUsageRow = {
   created_at: string;
 };
 
+export type ModelDetails = {
+  context_length: number | null;
+  pricing: { prompt: string | null; completion: string | null };
+  modality: string | null;
+  knowledge_cutoff: string | null;
+  reasoning_supported: boolean;
+};
+
 export type ActiveModel = {
   id: number;
   provider: string;
@@ -52,4 +60,5 @@ export type ActiveModel = {
   name: string;
   released_at: string | null;
   fetched_at: string;
+  details: ModelDetails | null;
 };

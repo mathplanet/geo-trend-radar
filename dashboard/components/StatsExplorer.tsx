@@ -1,7 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { aggregateBySource, aggregateKeywordTrend, itemWeekLabel, type StatsItem } from "@/lib/stats";
+import {
+  aggregateBySource,
+  aggregateClusterPersistence,
+  aggregateKeywordTrend,
+  itemWeekLabel,
+  type StatsItem,
+} from "@/lib/stats";
+import ClusterPersistenceList from "./ClusterPersistenceList";
 import KeywordTrendTable from "./KeywordTrendTable";
 import SourceStatsTable from "./SourceStatsTable";
 
@@ -25,9 +32,9 @@ export default function StatsExplorer({ items }: { items: StatsItem[] }) {
     return items.filter((item) => itemWeekLabel(item) === selected);
   }, [items, selected]);
 
-  // 키워드 트렌드는 aggregateKeywordTrend가 "데이터에 있는 가장 최근 두 주"를 스스로 골라
-  // 비교하므로, 선택한 주차 이하만 넘겨주면 자연스럽게 "선택 주 vs 그 직전 주"가 된다.
-  const keywordItems = useMemo(() => {
+  // 키워드 트렌드·클러스터 지속성은 둘 다 "선택한 주차까지 누적"으로 봐야 의미가 있다
+  // (키워드 트렌드는 선택 주 vs 그 직전 주 비교, 지속성은 여러 주에 걸친 반복 등장 여부).
+  const cumulativeItems = useMemo(() => {
     if (selected === ALL) return items;
     return items.filter((item) => {
       const week = itemWeekLabel(item);
@@ -36,7 +43,11 @@ export default function StatsExplorer({ items }: { items: StatsItem[] }) {
   }, [items, selected]);
 
   const sourceStats = useMemo(() => aggregateBySource(sourceItems), [sourceItems]);
-  const keywordTrend = useMemo(() => aggregateKeywordTrend(keywordItems), [keywordItems]);
+  const keywordTrend = useMemo(() => aggregateKeywordTrend(cumulativeItems), [cumulativeItems]);
+  const persistentClusters = useMemo(
+    () => aggregateClusterPersistence(cumulativeItems),
+    [cumulativeItems]
+  );
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[160px_minmax(0,1fr)]">
@@ -89,6 +100,20 @@ export default function StatsExplorer({ items }: { items: StatsItem[] }) {
           </p>
           <div className="mt-4">
             <KeywordTrendTable trend={keywordTrend} />
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
+            지속되는 주제
+          </h2>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            선택한 주차까지 2주 이상 반복 등장한 세부 주제(클러스터)입니다. 클러스터명은
+            매주 Claude가 그 주 글만 보고 새로 짓기 때문에, 같은 주제라도 표현이 달라지면
+            다른 주제로 잡힐 수 있어요(참고용 지표).
+          </p>
+          <div className="mt-4">
+            <ClusterPersistenceList clusters={persistentClusters} />
           </div>
         </section>
       </div>

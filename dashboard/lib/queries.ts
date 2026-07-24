@@ -88,7 +88,9 @@ export const getItemsForWeek = cache(async (week: string): Promise<Item[]> => {
 export async function getAllItemsForStats(): Promise<StatsItem[]> {
   const { data } = await supabase
     .from("items")
-    .select("collected_at, published_at, categories, source, tier, relevance_score, relevant, matched_keywords");
+    .select(
+      "collected_at, published_at, categories, source, tier, relevance_score, relevant, matched_keywords, cluster"
+    );
   return data ?? [];
 }
 

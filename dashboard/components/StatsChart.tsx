@@ -9,6 +9,7 @@ import {
   type Granularity,
   type StatsItem,
 } from "@/lib/stats";
+import CategoryTrendChart from "./CategoryTrendChart";
 
 const CHART_HEIGHT = 240;
 const BAR_WIDTH = 24;
@@ -35,7 +36,7 @@ function itemDay(item: StatsItem): string | null {
 
 export default function StatsChart({ items }: { items: StatsItem[] }) {
   const [granularity, setGranularity] = useState<Granularity>("week");
-  const [view, setView] = useState<"chart" | "table">("chart");
+  const [view, setView] = useState<"chart" | "trend" | "table">("chart");
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
   const [rangeStart, setRangeStart] = useState("");
   const [rangeEnd, setRangeEnd] = useState("");
@@ -62,6 +63,13 @@ export default function StatsChart({ items }: { items: StatsItem[] }) {
     [buckets]
   );
 
+  // 추세선 뷰는 day/week 토글과 무관하게 항상 주간 단위로 본다 (일별로 여러 주를 이으면
+  // 너무 촘촘해서 흐름이 안 보임).
+  const weekBuckets = useMemo(
+    () => aggregateByCategory(rangeFilteredItems, "week"),
+    [rangeFilteredItems]
+  );
+
   function showTooltip(e: React.SyntheticEvent, bucket: Bucket, category: string) {
     const containerRect = containerRef.current?.getBoundingClientRect();
     const targetRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -78,29 +86,46 @@ export default function StatsChart({ items }: { items: StatsItem[] }) {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800">
-          {(["week", "day"] as const).map((g) => (
+        {view !== "trend" && (
+          <div className="flex gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800">
+            {(["week", "day"] as const).map((g) => (
+              <button
+                key={g}
+                type="button"
+                onClick={() => setGranularity(g)}
+                className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                  granularity === g
+                    ? "bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100"
+                    : "text-neutral-500 dark:text-neutral-400"
+                }`}
+              >
+                {g === "week" ? "주간" : "일별"}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="ml-auto flex gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800">
+          {(
+            [
+              ["chart", "막대"],
+              ["trend", "추세선"],
+              ["table", "표"],
+            ] as const
+          ).map(([v, label]) => (
             <button
-              key={g}
+              key={v}
               type="button"
-              onClick={() => setGranularity(g)}
+              onClick={() => setView(v)}
               className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
-                granularity === g
+                view === v
                   ? "bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100"
                   : "text-neutral-500 dark:text-neutral-400"
               }`}
             >
-              {g === "week" ? "주간" : "일별"}
+              {label}
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={() => setView(view === "chart" ? "table" : "chart")}
-          className="text-sm font-medium text-neutral-500 underline-offset-2 hover:underline dark:text-neutral-400"
-        >
-          {view === "chart" ? "표로 보기" : "차트로 보기"}
-        </button>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
@@ -139,7 +164,11 @@ export default function StatsChart({ items }: { items: StatsItem[] }) {
         있습니다.
       </p>
 
-      {buckets.length === 0 ? (
+      {view === "trend" ? (
+        <div className="mt-4">
+          <CategoryTrendChart buckets={weekBuckets} />
+        </div>
+      ) : buckets.length === 0 ? (
         <p className="mt-6 text-neutral-500 dark:text-neutral-400">데이터가 없습니다.</p>
       ) : view === "table" ? (
         <div className="mt-4 overflow-x-auto">

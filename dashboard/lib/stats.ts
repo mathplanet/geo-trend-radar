@@ -10,6 +10,7 @@ export type StatsItem = Pick<
   | "relevance_score"
   | "relevant"
   | "matched_keywords"
+  | "cluster"
 >;
 
 /** relevant=false는 Claude가 주간 배치에서 "노이즈"로 재평가한 글. 아직 재평가 전(null)은
@@ -224,4 +225,53 @@ export function aggregateKeywordTrend(items: StatsItem[], limit = 15): KeywordTr
     .slice(0, limit);
 
   return { thisWeekLabel, lastWeekLabel, rows };
+}
+
+export type ClusterPersistence = {
+  cluster: string;
+  weeks: string[];
+  weekCount: number;
+  totalItems: number;
+  latestWeek: string;
+};
+
+/** 여러 주에 걸쳐 반복 등장하는 클러스터(세부 주제)를 찾는다 - 한 주만 반짝 나온 뉴스가
+ * 아니라 계속 이어지는 진짜 트렌드라는 신호. 한계: cluster는 summarize.py가 매주 그 주
+ * 글만 보고 자유 텍스트로 새로 짓는 라벨이라(cross-week 일관성 보장 없음), 같은 주제라도
+ * 표현이 달라지면(예: "AI Overview 클릭 감소" vs "AI Overviews 트래픽 감소") 다른 클러스터로
+ * 잡혀 과소 탐지될 수 있다. 정확 일치 기준의 v1 - 임베딩 기반 유사도 매칭은 URL 해시로
+ * 충분하다는 프로젝트 기존 방침(REQUIREMENTS.md)에 맞춰 일부러 안 씀. */
+export function aggregateClusterPersistence(
+  items: StatsItem[],
+  minWeeks = 2
+): ClusterPersistence[] {
+  const byCluster = new Map<string, { weeks: Set<string>; totalItems: number }>();
+
+  for (const item of items) {
+    if (!isNotNoise(item)) continue;
+    if (!item.cluster) continue;
+    const ts = item.published_at ?? item.collected_at;
+    if (!ts) continue;
+    const week = toIsoWeekLabel(new Date(ts));
+    if (!byCluster.has(item.cluster)) {
+      byCluster.set(item.cluster, { weeks: new Set(), totalItems: 0 });
+    }
+    const entry = byCluster.get(item.cluster)!;
+    entry.weeks.add(week);
+    entry.totalItems += 1;
+  }
+
+  return [...byCluster.entries()]
+    .map(([cluster, e]) => {
+      const weeks = [...e.weeks].sort();
+      return {
+        cluster,
+        weeks,
+        weekCount: weeks.length,
+        totalItems: e.totalItems,
+        latestWeek: weeks[weeks.length - 1],
+      };
+    })
+    .filter((c) => c.weekCount >= minWeeks)
+    .sort((a, b) => b.weekCount - a.weekCount || b.totalItems - a.totalItems);
 }

@@ -159,144 +159,159 @@ export default function GlobalSearch({ items }: { items: Item[] }) {
         ))}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <select
-          value={sourceFilter}
-          onChange={(e) => setSourceFilter(e.target.value)}
-          className="rounded-md border border-neutral-300 bg-white px-1.5 py-0.5 text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-        >
-          {sources.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-
-        <div className="flex gap-1 rounded-md bg-neutral-100 p-0.5 dark:bg-neutral-800">
-          {(
-            [
-              ["relevance", "관련도순"],
-              ["recent", "최신순"],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setSortBy(value)}
-              className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
-                sortBy === value
-                  ? "bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100"
-                  : "text-neutral-500 dark:text-neutral-400"
-              }`}
+      <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[200px_minmax(0,1fr)]">
+        <aside className="space-y-5 text-sm lg:sticky lg:top-4 lg:self-start">
+          <div>
+            <h3 className="text-xs font-semibold tracking-wide text-neutral-400 uppercase dark:text-neutral-500">
+              소스
+            </h3>
+            <select
+              value={sourceFilter}
+              onChange={(e) => setSourceFilter(e.target.value)}
+              className="mt-2 w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
             >
-              {label}
-            </button>
-          ))}
-        </div>
+              {sources.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <span className="mx-1 h-4 w-px bg-neutral-200 dark:bg-neutral-700" aria-hidden />
+          <div>
+            <h3 className="text-xs font-semibold tracking-wide text-neutral-400 uppercase dark:text-neutral-500">
+              정렬
+            </h3>
+            <div className="mt-2 flex gap-1 rounded-md bg-neutral-100 p-1 dark:bg-neutral-800">
+              {(
+                [
+                  ["relevance", "관련도순"],
+                  ["recent", "최신순"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setSortBy(value)}
+                  className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                    sortBy === value
+                      ? "bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100"
+                      : "text-neutral-500 dark:text-neutral-400"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <label className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-          기간
-          <input
-            type="date"
-            value={rangeStart}
-            onChange={(e) => setRangeStart(e.target.value)}
-            className="rounded-md border border-neutral-300 bg-white px-1.5 py-0.5 text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-          />
-        </label>
-        <span className="text-xs text-neutral-400">~</span>
-        <input
-          type="date"
-          value={rangeEnd}
-          onChange={(e) => setRangeEnd(e.target.value)}
-          className="rounded-md border border-neutral-300 bg-white px-1.5 py-0.5 text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-        />
-        {(rangeStart || rangeEnd) && (
-          <button
-            type="button"
-            onClick={() => {
-              setRangeStart("");
-              setRangeEnd("");
-            }}
-            className="text-xs text-neutral-400 underline-offset-2 hover:underline dark:text-neutral-500"
-          >
-            초기화
-          </button>
-        )}
-      </div>
-
-      {results.length === 0 ? (
-        <p className="mt-6 text-neutral-500 dark:text-neutral-400">검색 결과가 없습니다.</p>
-      ) : (
-        <div className="mt-6 space-y-4">
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            {results.length}건
-          </p>
-          {pagedResults.map((item) => {
-            const week = itemWeekLabel(item);
-            return (
-              <div key={item.id}>
-                {week && (
-                  <Link
-                    href={`/${week}`}
-                    className="mb-1.5 inline-block rounded bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
-                  >
-                    {week}
-                  </Link>
-                )}
-                <ItemCard item={item} />
-              </div>
-            );
-          })}
-
-          {totalPages > 1 && (
-            <nav className="flex items-center justify-center gap-1 pt-4">
-              <button
-                type="button"
-                onClick={() => setPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="rounded-md px-2.5 py-1.5 text-sm text-neutral-500 hover:bg-neutral-100 disabled:opacity-30 disabled:hover:bg-transparent dark:text-neutral-400 dark:hover:bg-neutral-800"
-                aria-label="이전 페이지"
-              >
-                ‹
-              </button>
-              {getPageNumbers(currentPage, totalPages).map((p, i) =>
-                p === "…" ? (
-                  <span
-                    key={`ellipsis-${i}`}
-                    className="px-1.5 text-sm text-neutral-400 dark:text-neutral-500"
-                  >
-                    …
-                  </span>
-                ) : (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPage(p)}
-                    className={`rounded-md px-3 py-1.5 text-sm font-medium tabular-nums transition-colors ${
-                      p === currentPage
-                        ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
-                        : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
-                    }`}
-                  >
-                    {p}
-                  </button>
-                )
+          <div>
+            <h3 className="text-xs font-semibold tracking-wide text-neutral-400 uppercase dark:text-neutral-500">
+              기간
+            </h3>
+            <div className="mt-2 space-y-1.5">
+              <input
+                type="date"
+                value={rangeStart}
+                onChange={(e) => setRangeStart(e.target.value)}
+                className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+              />
+              <input
+                type="date"
+                value={rangeEnd}
+                onChange={(e) => setRangeEnd(e.target.value)}
+                className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+              />
+              {(rangeStart || rangeEnd) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRangeStart("");
+                    setRangeEnd("");
+                  }}
+                  className="text-xs text-neutral-400 underline-offset-2 hover:underline dark:text-neutral-500"
+                >
+                  초기화
+                </button>
               )}
-              <button
-                type="button"
-                onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                className="rounded-md px-2.5 py-1.5 text-sm text-neutral-500 hover:bg-neutral-100 disabled:opacity-30 disabled:hover:bg-transparent dark:text-neutral-400 dark:hover:bg-neutral-800"
-                aria-label="다음 페이지"
-              >
-                ›
-              </button>
-            </nav>
+            </div>
+          </div>
+        </aside>
+
+        <div className="min-w-0">
+          {results.length === 0 ? (
+            <p className="text-neutral-500 dark:text-neutral-400">검색 결과가 없습니다.</p>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                {results.length}건
+              </p>
+              {pagedResults.map((item) => {
+                const week = itemWeekLabel(item);
+                return (
+                  <div key={item.id}>
+                    {week && (
+                      <Link
+                        href={`/${week}`}
+                        className="mb-1.5 inline-block rounded bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                      >
+                        {week}
+                      </Link>
+                    )}
+                    <ItemCard item={item} />
+                  </div>
+                );
+              })}
+
+              {totalPages > 1 && (
+                <nav className="flex items-center justify-center gap-1 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="rounded-md px-2.5 py-1.5 text-sm text-neutral-500 hover:bg-neutral-100 disabled:opacity-30 disabled:hover:bg-transparent dark:text-neutral-400 dark:hover:bg-neutral-800"
+                    aria-label="이전 페이지"
+                  >
+                    ‹
+                  </button>
+                  {getPageNumbers(currentPage, totalPages).map((p, i) =>
+                    p === "…" ? (
+                      <span
+                        key={`ellipsis-${i}`}
+                        className="px-1.5 text-sm text-neutral-400 dark:text-neutral-500"
+                      >
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPage(p)}
+                        className={`rounded-md px-3 py-1.5 text-sm font-medium tabular-nums transition-colors ${
+                          p === currentPage
+                            ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+                            : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="rounded-md px-2.5 py-1.5 text-sm text-neutral-500 hover:bg-neutral-100 disabled:opacity-30 disabled:hover:bg-transparent dark:text-neutral-400 dark:hover:bg-neutral-800"
+                    aria-label="다음 페이지"
+                  >
+                    ›
+                  </button>
+                </nav>
+              )}
+            </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

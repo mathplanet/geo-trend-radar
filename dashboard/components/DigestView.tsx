@@ -37,6 +37,12 @@ export default async function DigestView({
           )}
         </div>
 
+        {digest.theme && (
+          <p className="mt-3 text-lg leading-snug font-medium text-neutral-700 italic dark:text-neutral-300">
+            {digest.theme}
+          </p>
+        )}
+
         {digest.overview_points && digest.overview_points.length > 0 ? (
           <blockquote className="mt-4 rounded-lg border-l-4 border-indigo-400 bg-indigo-50/60 px-4 py-3 dark:border-indigo-500 dark:bg-indigo-950/30">
             <ul className="space-y-1.5 text-[15px] leading-relaxed text-neutral-800 dark:text-neutral-200">

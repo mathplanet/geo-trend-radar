@@ -28,6 +28,7 @@ export type Digest = {
   headline_items: number[] | null;
   overview: string | null;
   overview_points: OverviewPoint[] | null;
+  theme: string | null;
   category_insights: Record<string, string> | null;
   created_at: string;
 };

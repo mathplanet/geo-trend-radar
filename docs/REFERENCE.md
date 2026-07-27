@@ -276,6 +276,7 @@ create table digests (
   headline_items     bigint[],                     -- items.id 참조
   overview           text,                         -- 주간 총평(평문, overview_points 없는 예전 소비자용 폴백)
   overview_points    jsonb,                        -- [{"text": "...", "item_ids": [123, ...]}, ...] - 불릿마다 근거 글 링크
+  theme              text,                         -- 이번 주를 관통하는 한 문장 요약
   category_insights  jsonb,                        -- {"AI 검색 플랫폼": "2~3문장 총평", ...}
   created_at         timestamptz default now()
 );

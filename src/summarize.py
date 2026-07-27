@@ -41,8 +41,9 @@ DIGEST_SYSTEM = """당신은 GEO/SEO 트렌드 주간 다이제스트를 만드�
 아래는 이번 주 수집된 글 목록(id·주제·요약·시사점)입니다.
 가장 중요한 3~5개를 헤드라인으로 선정하고, 아래 JSON 형식으로만 답하세요.
 
-{"headline_ids": [<int>, ...], "overview_points": [{"text": "...", "item_ids": [<int>, ...]}, ...]}
+{"headline_ids": [<int>, ...], "theme": "...", "overview_points": [{"text": "...", "item_ids": [<int>, ...]}, ...]}
 
+- theme: 이번 주 전체를 관통하는 흐름을 매끄러운 완성 문장 1개로 정의. 불릿이 아니라 자연스러운 한 문장체, 25단어 이내. 개별 사실 나열이 아니라 "그래서 이번 주는 한마디로 무엇이었는가"에 대한 해석을 담을 것.
 - overview_points: 이번 주 핵심 3~5개. 각 항목은 한 문장, 20단어 이내로 가장 중요한 사실만 담을 것. 수식어·중복 설명 없이 5분 안에 훑을 수 있어야 함.
 - item_ids: 그 문장의 근거가 된 글 id를 1개 이상 반드시 포함 (위 목록에 실제로 있는 id만 사용, 지어내지 말 것)."""
 
@@ -215,6 +216,7 @@ def main():
     digest = build_digest(client, digest_candidates)
     week_label = compute_week_label(digest_candidates)
     headline_ids = digest.get("headline_ids", [])
+    theme = digest.get("theme")
 
     # item_ids는 Claude가 지어낼 수 있으니 실제 digest_candidates에 있는 id로만 걸러낸다.
     valid_ids = {item["id"] for item in digest_candidates}
@@ -227,10 +229,11 @@ def main():
     overview = "\n".join(f"- {p['text']}" for p in overview_points)
 
     category_insights = build_category_insights(client, digest_candidates)
-    upsert_digest(week_label, headline_ids, overview, category_insights, overview_points)
+    upsert_digest(week_label, headline_ids, overview, category_insights, overview_points, theme)
 
     by_id = {item["id"]: item for item in items}
     print(f"\n=== {week_label} 다이제스트 ===")
+    print(theme)
     print(overview)
     print("\n헤드라인:")
     for hid in headline_ids:

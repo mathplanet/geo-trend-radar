@@ -4,6 +4,7 @@ import type { Digest } from "@/lib/types";
 import BulletList from "./BulletList";
 import CategoryExplorer from "./CategoryExplorer";
 import InfoTooltip from "./InfoTooltip";
+import { formatDate } from "./ItemCard";
 
 const LEGEND_SCORES = [9, 6, 3];
 
@@ -83,6 +84,10 @@ export default async function DigestView({
                   >
                     {item.title}
                   </a>
+                  <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">
+                    {item.source ?? "출처 미상"} ·{" "}
+                    {formatDate(item.published_at ?? item.collected_at)}
+                  </p>
                   {item.insight && (
                     <p className="mt-1 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
                       {item.insight}

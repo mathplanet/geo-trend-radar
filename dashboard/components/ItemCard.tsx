@@ -58,10 +58,20 @@ export default function ItemCard({ item }: { item: Item }) {
         <CopyButton text={buildCopyText(item)} />
       </div>
       {item.summary && (
-        <BulletList
-          text={item.summary}
-          className="mt-2.5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300"
-        />
+        <>
+          <BulletList
+            text={item.summary}
+            className="mt-2.5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300"
+          />
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-block text-xs text-neutral-400 underline-offset-2 hover:text-neutral-600 hover:underline dark:text-neutral-500 dark:hover:text-neutral-300"
+          >
+            {item.source ?? "출처 미상"}에서 원문 보기 ↗
+          </a>
+        </>
       )}
     </article>
   );

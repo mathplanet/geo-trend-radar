@@ -30,6 +30,7 @@
 | 소스 | feed URL | 성격 |
 |------|----------|------|
 | OpenAI News | `https://openai.com/news/rss.xml` | ChatGPT Search 원출처 (피드 대용량 ~1000건) |
+| Google DeepMind Blog | `https://deepmind.google/blog/rss.xml` | Gemini 등 구글 AI 연구/모델 발표 원출처 |
 | Reddit r/SEO | `https://www.reddit.com/r/SEO/.rss` | 실무자 체감 트렌드 |
 | SparkToro | `https://sparktoro.com/blog/feed/` | 오디언스 리서치 |
 

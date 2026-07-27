@@ -63,6 +63,10 @@ sources:
     feed_url: https://www.reddit.com/r/SEO/.rss
     tier: broad
 
+  - name: Google DeepMind Blog
+    feed_url: https://deepmind.google/blog/rss.xml
+    tier: broad
+
   - name: SparkToro
     feed_url: https://sparktoro.com/blog/feed/
     tier: broad

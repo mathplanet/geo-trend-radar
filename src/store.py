@@ -78,13 +78,16 @@ def update_item_cluster(item_id, cluster):
     get_client().table("items").update({"cluster": cluster}).eq("id", item_id).execute()
 
 
-def upsert_digest(week, headline_item_ids, overview, category_insights=None):
-    """week UNIQUE 제약 기반 upsert. 같은 주에 여러 번 실행돼도 digests에 중복 행이 쌓이지 않는다."""
+def upsert_digest(week, headline_item_ids, overview, category_insights=None, overview_points=None):
+    """week UNIQUE 제약 기반 upsert. 같은 주에 여러 번 실행돼도 digests에 중복 행이 쌓이지 않는다.
+    overview_points: [{"text": str, "item_ids": [int, ...]}, ...] - 대시보드가 불릿마다 근거 글
+    링크를 보여줄 때 씀. overview(평문)는 이 필드가 없는 예전 소비자를 위한 폴백으로 계속 채움."""
     get_client().table("digests").upsert({
         "week": week,
         "headline_items": headline_item_ids,
         "overview": overview,
         "category_insights": category_insights or {},
+        "overview_points": overview_points or [],
     }, on_conflict="week").execute()
 
 

@@ -17,11 +17,17 @@ export type Item = {
   categories: string[] | null;
 };
 
+export type OverviewPoint = {
+  text: string;
+  item_ids: number[];
+};
+
 export type Digest = {
   id: number;
   week: string;
   headline_items: number[] | null;
   overview: string | null;
+  overview_points: OverviewPoint[] | null;
   category_insights: Record<string, string> | null;
   created_at: string;
 };

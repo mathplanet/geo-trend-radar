@@ -18,6 +18,7 @@ export default async function DigestView({
   const items = await getItemsForWeek(digest.week);
   const headlineIds = new Set(digest.headline_items ?? []);
   const headlineItems = items.filter((item) => headlineIds.has(item.id));
+  const itemsById = new Map(items.map((item) => [item.id, item]));
 
   return (
     <div className="space-y-12">
@@ -36,13 +37,51 @@ export default async function DigestView({
           )}
         </div>
 
-        {digest.overview && (
+        {digest.overview_points && digest.overview_points.length > 0 ? (
           <blockquote className="mt-4 rounded-lg border-l-4 border-indigo-400 bg-indigo-50/60 px-4 py-3 dark:border-indigo-500 dark:bg-indigo-950/30">
-            <BulletList
-              text={digest.overview}
-              className="text-[15px] leading-relaxed text-neutral-800 dark:text-neutral-200"
-            />
+            <ul className="space-y-1.5 text-[15px] leading-relaxed text-neutral-800 dark:text-neutral-200">
+              {digest.overview_points.map((point, i) => {
+                const sources = point.item_ids
+                  .map((id) => itemsById.get(id))
+                  .filter((item): item is NonNullable<typeof item> => !!item);
+                return (
+                  <li key={i} className="flex gap-1.5">
+                    <span className="mt-0.5 shrink-0 text-neutral-400 dark:text-neutral-500">
+                      •
+                    </span>
+                    <span>
+                      {point.text}
+                      {sources.length > 0 && (
+                        <span className="ml-1.5 inline-flex flex-wrap gap-1 align-middle">
+                          {sources.map((item) => (
+                            <a
+                              key={item.id}
+                              href={item.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              title={item.title}
+                              className="rounded bg-indigo-100 px-1.5 py-0.5 text-xs font-medium text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:hover:bg-indigo-900"
+                            >
+                              {item.source ?? "출처"}
+                            </a>
+                          ))}
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
           </blockquote>
+        ) : (
+          digest.overview && (
+            <blockquote className="mt-4 rounded-lg border-l-4 border-indigo-400 bg-indigo-50/60 px-4 py-3 dark:border-indigo-500 dark:bg-indigo-950/30">
+              <BulletList
+                text={digest.overview}
+                className="text-[15px] leading-relaxed text-neutral-800 dark:text-neutral-200"
+              />
+            </blockquote>
+          )
         )}
 
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-neutral-500 dark:text-neutral-400">

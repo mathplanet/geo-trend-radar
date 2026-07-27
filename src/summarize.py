@@ -41,9 +41,10 @@ DIGEST_SYSTEM = """당신은 GEO/SEO 트렌드 주간 다이제스트를 만드�
 아래는 이번 주 수집된 글 목록(id·주제·요약·시사점)입니다.
 가장 중요한 3~5개를 헤드라인으로 선정하고, 아래 JSON 형식으로만 답하세요.
 
-{"headline_ids": [<int>, ...], "overview": "이번 주 핵심 3~5개 (줄바꿈으로 구분, 한글)"}
+{"headline_ids": [<int>, ...], "overview_points": [{"text": "...", "item_ids": [<int>, ...]}, ...]}
 
-- overview: 완전한 문단이 아니라 **불릿 3~5개**. 각 줄은 한 문장, 20단어 이내로 이번 주 가장 중요한 사실만 담을 것. 수식어·중복 설명 없이 5분 안에 훑을 수 있어야 함."""
+- overview_points: 이번 주 핵심 3~5개. 각 항목은 한 문장, 20단어 이내로 가장 중요한 사실만 담을 것. 수식어·중복 설명 없이 5분 안에 훑을 수 있어야 함.
+- item_ids: 그 문장의 근거가 된 글 id를 1개 이상 반드시 포함 (위 목록에 실제로 있는 id만 사용, 지어내지 말 것)."""
 
 CATEGORY_INSIGHTS_SYSTEM = """당신은 GEO/SEO 트렌드 리포트의 섹션 에디터입니다.
 아래는 이번 주 다이제스트를 그룹(대분류)별로 나눈 글 목록입니다 (한 글이 여러 그룹에 속할 수 있음).
@@ -214,9 +215,19 @@ def main():
     digest = build_digest(client, digest_candidates)
     week_label = compute_week_label(digest_candidates)
     headline_ids = digest.get("headline_ids", [])
-    overview = digest.get("overview")
+
+    # item_ids는 Claude가 지어낼 수 있으니 실제 digest_candidates에 있는 id로만 걸러낸다.
+    valid_ids = {item["id"] for item in digest_candidates}
+    overview_points = [
+        {"text": p["text"], "item_ids": [i for i in p.get("item_ids", []) if i in valid_ids]}
+        for p in digest.get("overview_points", [])
+        if p.get("text")
+    ]
+    # overview(평문)는 overview_points 없이 digest.overview만 읽는 예전 소비자를 위해 계속 채움.
+    overview = "\n".join(f"- {p['text']}" for p in overview_points)
+
     category_insights = build_category_insights(client, digest_candidates)
-    upsert_digest(week_label, headline_ids, overview, category_insights)
+    upsert_digest(week_label, headline_ids, overview, category_insights, overview_points)
 
     by_id = {item["id"]: item for item in items}
     print(f"\n=== {week_label} 다이제스트 ===")

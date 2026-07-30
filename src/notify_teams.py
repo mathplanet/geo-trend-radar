@@ -8,6 +8,7 @@ import json
 import os
 import sys
 import urllib.request
+from datetime import datetime, timedelta
 
 from store import get_client
 
@@ -26,6 +27,21 @@ def get_latest_digest():
     return resp.data[0] if resp.data else None
 
 
+def get_items_by_ids(ids):
+    if not ids:
+        return {}
+    resp = get_client().table("items").select("id, source, url").in_("id", ids).execute()
+    return {row["id"]: row for row in resp.data}
+
+
+def format_week_range(week_label):
+    """'2026-W30' -> '7월 20일~7월 26일' (대시보드 formatWeekRange와 동일 규칙, 표기만 한글)."""
+    year, week = week_label.split("-W")
+    monday = datetime.strptime(f"{year}-W{week}-1", "%G-W%V-%u")
+    sunday = monday + timedelta(days=6)
+    return f"{monday.month}월 {monday.day}일~{sunday.month}월 {sunday.day}일"
+
+
 def build_card(digest):
     """Teams Workflows의 'Post card in a chat or channel' 액션은 웹후크로 받은 JSON을
     그대로 Adaptive Card로 역직렬화한다 - 임의 JSON({"text": ...} 등)을 보내면
@@ -34,7 +50,7 @@ def build_card(digest):
     body = [
         {
             "type": "TextBlock",
-            "text": f"GEO Trend Radar — {digest['week']} 다이제스트",
+            "text": f"GEO Trend Radar — {format_week_range(digest['week'])} 다이제스트",
             "weight": "Bolder",
             "size": "Medium",
             "wrap": True,
@@ -47,14 +63,36 @@ def build_card(digest):
                 "text": digest["theme"],
                 "wrap": True,
                 "isSubtle": True,
-                "spacing": "Small",
+                "spacing": "Medium",
             }
         )
 
     points = digest.get("overview_points") or []
     if points:
-        bullets = "\n".join(f"- {p['text']}" for p in points)
-        body.append({"type": "TextBlock", "text": bullets, "wrap": True, "spacing": "Medium"})
+        # 불릿마다 근거 글의 출처명을 링크로 붙인다 (Adaptive Card TextBlock은
+        # 마크다운 링크 [텍스트](url) 문법을 지원함). 한 블록에 몰아넣지 않고 불릿마다
+        # 별도 TextBlock + spacing:Medium을 줘서 촘촘해 보이지 않게 간격을 벌린다.
+        all_ids = [item_id for p in points for item_id in p.get("item_ids", [])]
+        items_by_id = get_items_by_ids(all_ids)
+
+        for i, p in enumerate(points):
+            links = [
+                f"[{items_by_id[item_id]['source'] or '출처'}]({items_by_id[item_id]['url']})"
+                for item_id in p.get("item_ids", [])
+                if item_id in items_by_id
+            ]
+            line = f"● {p['text']}"
+            if links:
+                line += "  " + " · ".join(links)
+            body.append(
+                {
+                    "type": "TextBlock",
+                    "text": line,
+                    "wrap": True,
+                    "spacing": "Large" if i == 0 else "Medium",
+                    "separator": i == 0,
+                }
+            )
 
     return {
         "type": "AdaptiveCard",

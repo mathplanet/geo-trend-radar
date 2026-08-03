@@ -150,6 +150,7 @@ def collect_source(source, keywords, keyword_category, patterns, tier_thresholds
     """단일 소스를 수집한다. 실패해도 예외를 삼켜 다른 소스 수집을 막지 않는다 (NFR: 소스별 격리)."""
     name = source["name"]
     tier = source["tier"]
+    source_type = source.get("source_type")
     threshold = resolve_threshold(source, tier_thresholds, default_threshold)
 
     try:
@@ -196,6 +197,7 @@ def collect_source(source, keywords, keyword_category, patterns, tier_thresholds
             "title": title,
             "source": name,
             "tier": tier,
+            "source_type": source_type,
             "published_at": published_at,
             "matched_keywords": matched,
             "relevance_score": score,

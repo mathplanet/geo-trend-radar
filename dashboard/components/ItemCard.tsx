@@ -1,7 +1,33 @@
+import type { ReactNode } from "react";
 import type { Item } from "@/lib/types";
 import BulletList, { parseBulletLines } from "./BulletList";
 import CopyButton from "./CopyButton";
+import RedditIcon from "./icons/RedditIcon";
 import { getScoreBand } from "@/lib/score";
+
+/** source_type이 community인 소스만, 그 플랫폼의 공식 아이콘으로 표시 (텍스트 배지 대신).
+ * 소스명으로 키를 잡는 이유는 source_type이 같아도(향후 다른 커뮤니티 소스 추가 시) 아이콘은
+ * 플랫폼마다 다르기 때문 - 새 커뮤니티 소스가 생기면 여기 항목만 추가하면 됨. */
+const SOURCE_ICONS: Record<string, ReactNode> = {
+  "Reddit r/SEO": <RedditIcon />,
+};
+
+/** 공식/매체는 "기본값"이라 눈에 덜 띄는 회색으로, 커뮤니티(검증 안 된 개인 의견)만
+ * amber로 튀게 - 셋 다 색을 강하게 주면 카드 왼쪽 테두리(관련도 점수)랑 헷갈림. */
+const SOURCE_TYPE_LABELS: Record<string, { label: string; className: string }> = {
+  official: {
+    label: "공식",
+    className: "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400",
+  },
+  trade: {
+    label: "매체",
+    className: "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400",
+  },
+  community: {
+    label: "커뮤니티",
+    className: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  },
+};
 
 export function formatDate(ts: string | null): string {
   if (!ts) return "-";
@@ -52,8 +78,17 @@ export default function ItemCard({ item }: { item: Item }) {
         </span>
       </div>
       <div className="mt-1.5 flex items-center justify-between gap-2">
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          {item.source ?? "출처 미상"} · {formatDate(item.published_at ?? item.collected_at)}
+        <p className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+          {item.source && SOURCE_ICONS[item.source]}
+          {item.source ?? "출처 미상"}
+          {item.source_type && SOURCE_TYPE_LABELS[item.source_type] && (
+            <span
+              className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${SOURCE_TYPE_LABELS[item.source_type].className}`}
+            >
+              {SOURCE_TYPE_LABELS[item.source_type].label}
+            </span>
+          )}
+          <span>· {formatDate(item.published_at ?? item.collected_at)}</span>
         </p>
         <CopyButton text={buildCopyText(item)} />
       </div>

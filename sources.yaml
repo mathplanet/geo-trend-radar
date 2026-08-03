@@ -1,5 +1,7 @@
 # 소스 리스트 (REFERENCE.md §1)
-# tier: primary(느슨하게) / trade(표준) / broad(엄격하게)
+# tier: primary(느슨하게) / trade(표준) / broad(엄격하게) - 노이즈 판단 기준 threshold용
+# source_type: official(회사 공식 발표) / trade(전문 매체·에디터) / community(개인 의견·경험담,
+#   검증 안 됨) - tier와 별개 축. 대시보드가 community 소스만 별도 아이콘으로 표시하는 데 씀.
 # 특정 소스만 threshold를 다르게 주고 싶으면 해당 항목에 `threshold: N` 추가 (tier 기본값보다 우선)
 
 sources:
@@ -7,66 +9,82 @@ sources:
   - name: Google Search Central Blog
     feed_url: https://developers.google.com/search/blog/feed.xml
     tier: primary
+    source_type: official
 
   - name: Google Search Product Blog
     feed_url: https://blog.google/products/search/rss/
     tier: primary
+    source_type: official
 
   - name: Bing Webmaster Blog
     feed_url: https://blogs.bing.com/webmaster/feed
     tier: primary
+    source_type: official
 
   - name: Naver 웹마스터 블로그
     feed_url: https://rss.blog.naver.com/naver_webmaster.xml
     tier: primary
+    source_type: official
 
   # --- trade: SEO 전문 매체 ---
   - name: Search Engine Land
     feed_url: https://searchengineland.com/feed
     tier: trade
+    source_type: trade
 
   - name: Search Engine Journal
     feed_url: https://www.searchenginejournal.com/feed/
     tier: trade
+    source_type: trade
 
   - name: Search Engine Roundtable
     feed_url: https://feeds.feedburner.com/SearchEngineRoundtable1
     tier: trade
+    source_type: trade
 
   - name: Ahrefs Blog
     feed_url: https://ahrefs.com/blog/feed/
     tier: trade
+    source_type: trade
 
   - name: Moz Blog
     feed_url: https://moz.com/posts/rss/blog
     tier: trade
+    source_type: trade
 
   - name: Semrush Blog
     feed_url: https://www.semrush.com/blog/feed/
     tier: trade
+    source_type: trade
 
   - name: Search Engine Watch
     feed_url: https://www.searchenginewatch.com/feed/
     tier: trade
+    source_type: trade
 
   # --- broad: 노이즈 많은 광역 ---
   - name: OpenAI News
     feed_url: https://openai.com/news/rss.xml
     tier: broad
+    source_type: official
 
   # 공식 RSS가 없어서 뉴스 목록 페이지를 직접 스크래핑 (collect.py의 scrape_anthropic_news 참고)
   - name: Anthropic News
     scraper: anthropic_news
     tier: broad
+    source_type: official
 
   - name: Reddit r/SEO
     feed_url: https://www.reddit.com/r/SEO/.rss
     tier: broad
+    source_type: community
 
   - name: Google DeepMind Blog
     feed_url: https://deepmind.google/blog/rss.xml
     tier: broad
+    source_type: official
 
   - name: SparkToro
     feed_url: https://sparktoro.com/blog/feed/
     tier: broad
+    source_type: official

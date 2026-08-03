@@ -5,6 +5,7 @@ export type Item = {
   title: string;
   source: string | null;
   tier: string | null;
+  source_type: string | null;
   published_at: string | null;
   matched_keywords: string[] | null;
   relevance_score: number | null;

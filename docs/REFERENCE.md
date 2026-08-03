@@ -257,6 +257,7 @@ create table items (
   title            text not null,
   source           text,
   tier             text,
+  source_type      text,                         -- official/trade/community (sources.yaml에서 옴, tier와 별개 축)
   published_at     timestamptz,
   matched_keywords text[],
   relevance_score  int,

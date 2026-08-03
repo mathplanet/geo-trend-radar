@@ -2,14 +2,23 @@ import type { ReactNode } from "react";
 import type { Item } from "@/lib/types";
 import BulletList, { parseBulletLines } from "./BulletList";
 import CopyButton from "./CopyButton";
+import AnthropicIcon from "./icons/AnthropicIcon";
+import BingIcon from "./icons/BingIcon";
+import GoogleIcon from "./icons/GoogleIcon";
+import OpenAiIcon from "./icons/OpenAiIcon";
 import RedditIcon from "./icons/RedditIcon";
 import { getScoreBand } from "@/lib/score";
 
-/** source_type이 community인 소스만, 그 플랫폼의 공식 아이콘으로 표시 (텍스트 배지 대신).
- * 소스명으로 키를 잡는 이유는 source_type이 같아도(향후 다른 커뮤니티 소스 추가 시) 아이콘은
- * 플랫폼마다 다르기 때문 - 새 커뮤니티 소스가 생기면 여기 항목만 추가하면 됨. */
+/** 소스명으로 키를 잡는다 - 로고가 단순·인지도 높은 몇 개(원출처 신호가 큰 곳들)만 넣고
+ * 나머지는 "공식/매체" 텍스트 배지로 충분하다고 판단해 일부러 안 넣음 (아이콘 난립 방지).
+ * 새로 추가하고 싶은 소스가 생기면 여기 항목만 추가하면 됨. */
 const SOURCE_ICONS: Record<string, ReactNode> = {
   "Reddit r/SEO": <RedditIcon />,
+  "Google Search Central Blog": <GoogleIcon />,
+  "Google Search Product Blog": <GoogleIcon />,
+  "OpenAI News": <OpenAiIcon />,
+  "Anthropic News": <AnthropicIcon />,
+  "Bing Webmaster Blog": <BingIcon />,
 };
 
 /** 공식/매체는 "기본값"이라 눈에 덜 띄는 회색으로, 커뮤니티(검증 안 된 개인 의견)만

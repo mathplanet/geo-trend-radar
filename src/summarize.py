@@ -41,11 +41,17 @@ DIGEST_SYSTEM = """당신은 GEO/SEO 트렌드 주간 다이제스트를 만드�
 아래는 이번 주 수집된 글 목록(id·주제·요약·시사점)입니다.
 가장 중요한 3~5개를 헤드라인으로 선정하고, 아래 JSON 형식으로만 답하세요.
 
-{"headline_ids": [<int>, ...], "theme": "...", "overview_points": [{"text": "...", "item_ids": [<int>, ...]}, ...]}
+{"headline_ids": [<int>, ...], "key_updates": [{"text": "...", "item_ids": [<int>, ...]}, ...]}
 
-- theme: 이번 주 전체를 관통하는 흐름을 매끄러운 완성 문장 1개로 정의. 불릿이 아니라 자연스러운 한 문장체, 25단어 이내. 개별 사실 나열이 아니라 "그래서 이번 주는 한마디로 무엇이었는가"에 대한 해석을 담을 것.
-- overview_points: 이번 주 핵심 3~5개, 20단어 이내로 가장 중요한 사실만. **서술형 완성 문장이 아니라 명사형으로 끝내는 개조식**으로 쓸 것 (예: "~검토 중이다" 대신 "~검토 중", "~둔화됐다" 대신 "~둔화"). 수식어·중복 설명·불필요한 "~이다/~다" 종결 없이 5분 안에 훑을 수 있어야 함.
-- item_ids: 그 문장의 근거가 된 글 id를 1개 이상 반드시 포함 (위 목록에 실제로 있는 id만 사용, 지어내지 말 것)."""
+- key_updates: "이번 주 꼭 알아야 할 사항"만 엄선. LLM/AI 모델 신규 출시·업데이트, 검색엔진의
+  공식 알고리즘 업데이트 발표, 확인된 대규모 순위 변동성처럼 실무에 직접 영향을 주는 사실만
+  포함할 것 (출처가 반드시 그 회사 공식 채널일 필요는 없음 - 매체가 먼저 감지·보도하는 경우도
+  포함. 대신 내용 자체가 실무 영향도 높아야 함). 흔한 SEO 팁, 사례 공유, 의견글, 일반론은 제외.
+  해당하는 게 없으면 반드시 빈 배열([])로 둘 것 - 항목 수를 채우려고 억지로 넣지 말 것.
+  각 항목은 20단어 이내, **서술형 완성 문장이 아니라 명사형으로 끝내는 개조식**으로 쓸 것
+  (예: "~검토 중이다" 대신 "~검토 중", "~둔화됐다" 대신 "~둔화").
+- item_ids: 그 항목의 근거가 된 글 id를 1개 이상 반드시 포함 (위 목록에 실제로 있는 id만 사용,
+  지어내지 말 것)."""
 
 CATEGORY_INSIGHTS_SYSTEM = """당신은 GEO/SEO 트렌드 리포트의 섹션 에디터입니다.
 아래는 이번 주 다이제스트를 그룹(대분류)별로 나눈 글 목록입니다 (한 글이 여러 그룹에 속할 수 있음).
@@ -216,25 +222,27 @@ def main():
     digest = build_digest(client, digest_candidates)
     week_label = compute_week_label(digest_candidates)
     headline_ids = digest.get("headline_ids", [])
-    theme = digest.get("theme")
 
     # item_ids는 Claude가 지어낼 수 있으니 실제 digest_candidates에 있는 id로만 걸러낸다.
+    # key_updates는 "이번 주 꼭 알아야 할 사항"만 엄선한 거라 비어있는 주도 정상이다 (매주
+    # 억지로 채우던 theme/overview_points 방식이 매주 비슷한 거대서사만 반복한다는 피드백에
+    # 따라 교체함). digests.overview_points 컬럼은 그대로 재사용 - 스키마는 안 바꾸고 내용
+    # 기준만 바꿈. theme은 더 이상 생성하지 않아 None으로 저장.
     valid_ids = {item["id"] for item in digest_candidates}
-    overview_points = [
+    key_updates = [
         {"text": p["text"], "item_ids": [i for i in p.get("item_ids", []) if i in valid_ids]}
-        for p in digest.get("overview_points", [])
+        for p in digest.get("key_updates", [])
         if p.get("text")
     ]
-    # overview(평문)는 overview_points 없이 digest.overview만 읽는 예전 소비자를 위해 계속 채움.
-    overview = "\n".join(f"- {p['text']}" for p in overview_points)
+    overview = "\n".join(f"- {p['text']}" for p in key_updates)
 
     category_insights = build_category_insights(client, digest_candidates)
-    upsert_digest(week_label, headline_ids, overview, category_insights, overview_points, theme)
+    upsert_digest(week_label, headline_ids, overview, category_insights, key_updates, theme=None)
 
     by_id = {item["id"]: item for item in items}
     print(f"\n=== {week_label} 다이제스트 ===")
-    print(theme)
-    print(overview)
+    print(f"꼭 알아야 할 사항: {len(key_updates)}건")
+    print(overview or "(해당 없음)")
     print("\n헤드라인:")
     for hid in headline_ids:
         item = by_id.get(hid)

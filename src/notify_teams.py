@@ -153,7 +153,7 @@ def build_card(digest):
             "items": [
                 {
                     "type": "TextBlock",
-                    "text": "이번 주 핵심",
+                    "text": "이번 주 꼭 알아야 할 사항",
                     "size": "Small",
                     "weight": "Bolder",
                     "color": "Accent",

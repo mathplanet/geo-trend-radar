@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 
 from store import get_client
 
-DASHBOARD_URL = "https://geo-trend-radar.hyeontaek-ki.workers.dev"
+DASHBOARD_URL = "https://geo-trend-radar.cnx-aeo.workers.dev"
 
 
 def get_latest_digest():

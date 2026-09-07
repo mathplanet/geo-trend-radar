@@ -7,7 +7,7 @@
 
 | 대상 | 주소 | 용도 |
 |------|------|------|
-| 대시보드(팀 공유) | https://geo-trend-radar.hyeontaek-ki.workers.dev | 이번 주 다이제스트 + 주차별 아카이브 |
+| 대시보드(팀 공유) | https://geo-trend-radar.cnx-aeo.workers.dev | 이번 주 다이제스트 + 주차별 아카이브 |
 | GitHub 레포 | https://github.com/mathplanet/geo-trend-radar | 코드, Actions 실행 이력 |
 | Supabase 프로젝트 | https://supabase.com/dashboard/project/npamwrwiegihwqcszjuj | DB(테이블 데이터), SQL Editor |
 | Cloudflare 대시보드 | https://dash.cloudflare.com → Workers & Pages → `geo-trend-radar` | 배포 이력, 도메인 설정 |

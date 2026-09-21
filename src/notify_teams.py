@@ -4,15 +4,23 @@ publish.yml에서 summarize.py 직후 실행. 가장 최근에 upsert된(created
 다이제스트를 다시 읽어와 theme(이번 주 한 문장) + overview_points 불릿 +
 대시보드 링크를 Teams Workflows 웹후크로 전송한다.
 """
+import argparse
 import json
 import os
 import sys
 import urllib.request
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from store import get_client
 
 DASHBOARD_URL = "https://geo-trend-radar.cnx-aeo.workers.dev"
+
+# summarize.py가 이번 주 다이제스트 대상 글이 없어 upsert를 스킵하면(예: cron 지연으로
+# 주 경계를 넘겨 돌아 "이번 주"가 빈 새 주로 계산된 경우), get_latest_digest()는 여전히
+# 지난주 행을 돌려준다. 이 스크립트는 summarize.py 직후 같은 job에서 실행되므로, 방금
+# 만들어진 게 아니면(=오래된 digest면) 이미 지난주에 한 번 보낸 알림을 그대로 재발송하게
+# 된다 (2026-W38 발행 때 실제로 발생). created_at이 이 시간 이내가 아니면 전송을 건너뛴다.
+FRESHNESS_HOURS = 2
 
 
 def get_latest_digest():
@@ -179,6 +187,14 @@ def build_card(digest):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="최신 다이제스트가 오래됐어도(=이번 실행에서 새로 만들어진 게 아니어도) 강제로 전송",
+    )
+    args = parser.parse_args()
+
     webhook_url = os.environ.get("TEAMS_WEBHOOK_URL")
     if not webhook_url:
         sys.exit("TEAMS_WEBHOOK_URL 환경변수가 필요합니다.")
@@ -186,6 +202,16 @@ def main():
     digest = get_latest_digest()
     if not digest:
         print("발행된 다이제스트가 없어 알림을 건너뜁니다.")
+        return
+
+    created_at = datetime.fromisoformat(digest["created_at"].replace("Z", "+00:00"))
+    age_hours = (datetime.now(timezone.utc) - created_at).total_seconds() / 3600
+    if not args.force and age_hours > FRESHNESS_HOURS:
+        print(
+            f"최신 다이제스트({digest['week']})가 {age_hours:.1f}시간 전에 생성됨 - "
+            f"이번 실행에서 새로 만들어진 게 아닌 것으로 보여 전송을 건너뜁니다. "
+            f"(의도적으로 지난 다이제스트를 재전송하려면 --force)"
+        )
         return
 
     payload = json.dumps(build_card(digest)).encode("utf-8")

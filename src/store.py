@@ -123,10 +123,17 @@ def within_window(item, days):
     return False
 
 
-def current_week_range():
+def current_week_range(grace_hours=12):
     """이번 주 [월요일 00:00, 일요일 23:59:59] UTC 범위.
-    대시보드(queries.ts의 isoWeekToRange)와 동일한 규칙."""
-    now = datetime.now(timezone.utc)
+    대시보드(queries.ts의 isoWeekToRange)와 동일한 규칙.
+
+    grace_hours: 예약 실행(cron)이 지연되어 주 경계(월요일 00:00 UTC)를 넘겨 도는 경우를
+    대비한 유예 시간. publish.yml은 일요일 23:00 UTC에 도는 걸 전제로 "막 끝난 주"를
+    다이제스트 대상으로 잡는데, 지연되어 월요일 새벽에 실제로 돌면 보정 없이는 "이번 주"가
+    방금 막 시작해 아직 데이터가 없는 새 주로 계산되어 다이제스트가 통째로 스킵된다
+    (2026-W38 발행 때 1시간 48분 지연으로 실제로 이 문제가 발생함). 자정 이후 grace_hours
+    이내는 여전히 "막 끝난 지난 주"로 취급해 이를 막는다."""
+    now = datetime.now(timezone.utc) - timedelta(hours=grace_hours)
     monday = (now - timedelta(days=now.weekday())).replace(
         hour=0, minute=0, second=0, microsecond=0
     )

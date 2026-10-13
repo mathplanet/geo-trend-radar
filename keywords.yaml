@@ -23,6 +23,15 @@ categories:
       chatgpt search: 4
       perplexity: 3
       google gemini: 2
+      ai agent: 4
+      ai agents: 4
+      agentic commerce: 4
+      shopping agent: 4
+      shopping agents: 4
+      meta ai: 4
+      meta muse: 5
+      frontier model: 4
+      frontier models: 4
 
   geo_strategy:
     label: "GEO/AEO 최적화 전략"

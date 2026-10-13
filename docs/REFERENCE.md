@@ -3,17 +3,17 @@
 > 소스 · 키워드 · 필터 규칙 · DB 스키마. 빌더가 그대로 사용/확장하면 됨.
 > 실제 설정 파일: 레포 루트의 [`sources.yaml`](../sources.yaml), [`keywords.yaml`](../keywords.yaml)
 
-## 1. 소스 리스트 (14개, 전부 RSS 작동 확인 완료)
+## 1. 소스 리스트 (19개, 전부 RSS 작동 확인 완료)
 
 `type: rss` · 등급(tier)은 노이즈 비율에 따른 분류 → 등급별 threshold 적용(§3).
 
 ### primary — 공식 1차 출처 (느슨하게, 놓치지 않게)
-| 소스 | feed URL | 성격 |
-|------|----------|------|
-| Google Search Central Blog | `https://developers.google.com/search/blog/feed.xml` | 구글 검색 공식 발표 (SEO 실무 직결) |
-| Google Search Product Blog | `https://blog.google/products/search/rss/` | AI Mode·AI Overviews 등 검색 제품 발표 |
-| Bing Webmaster Blog | `https://blogs.bing.com/webmaster/feed` | Bing 검색 공식 발표 (AI 관련 기능 다수) |
-| Naver 웹마스터 블로그 | `https://rss.blog.naver.com/naver_webmaster.xml` | 네이버 검색 공식 발표 (국내 검색 동향) |
+| 소스                         | feed URL                                             | 성격                              |
+| -------------------------- | ---------------------------------------------------- | ------------------------------- |
+| Google Search Central Blog | `https://developers.google.com/search/blog/feed.xml` | 구글 검색 공식 발표 (SEO 실무 직결)         |
+| Google Search Product Blog | `https://blog.google/products/search/rss/`           | AI Mode·AI Overviews 등 검색 제품 발표 |
+| Bing Webmaster Blog        | `https://blogs.bing.com/webmaster/feed`              | Bing 검색 공식 발표 (AI 관련 기능 다수)     |
+| Naver 웹마스터 블로그             | `https://rss.blog.naver.com/naver_webmaster.xml`     | 네이버 검색 공식 발표 (국내 검색 동향)         |
 
 ### trade — SEO 전문 매체 (기본)
 | 소스 | feed URL | 성격 |
@@ -33,6 +33,9 @@
 | Google DeepMind Blog | `https://deepmind.google/blog/rss.xml` | Gemini 등 구글 AI 연구/모델 발표 원출처 |
 | Reddit r/SEO | `https://www.reddit.com/r/SEO/.rss` | 실무자 체감 트렌드 |
 | SparkToro | `https://sparktoro.com/blog/feed/` | 오디언스 리서치 |
+| Meta Newsroom | `https://about.fb.com/news/feed/` | Meta AI(Muse 등)·에이전트 발표 원출처 (threshold override 4) |
+| TechCrunch AI | `https://techcrunch.com/category/artificial-intelligence/feed/` | 업계 전반 AI 뉴스, Google 편중 완화용 (threshold override 4) |
+| The Verge AI | `https://www.theverge.com/rss/ai-artificial-intelligence/index.xml` | 업계 전반 AI 뉴스, 쇼핑/에이전트 커버 (threshold override 4) |
 
 ## 2. 확장 후보 소스 (RSS 미확인/보류)
 
@@ -103,6 +106,15 @@ RSS가 없거나 접근 차단되어 v1 제외. v2에서 `type: crawl`로 붙일
 | chatgpt search | 4 |
 | perplexity | 3 |
 | google gemini | 2 |
+| ai agent | 4 |
+| ai agents | 4 |
+| agentic commerce | 4 |
+| shopping agent | 4 |
+| shopping agents | 4 |
+| meta ai | 4 |
+| meta muse | 5 |
+| frontier model | 4 |
+| frontier models | 4 |
 
 ### 4.3 GEO/AEO 최적화 전략 (`geo_strategy`)
 | 키워드 | 가중치 |

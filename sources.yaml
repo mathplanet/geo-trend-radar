@@ -88,3 +88,24 @@ sources:
     feed_url: https://sparktoro.com/blog/feed/
     tier: broad
     source_type: official
+
+  # --- Google 편중 완화: Meta/업계 전반(에이전트·쇼핑 에이전트·모델 업데이트) 커버 ---
+  # broad 기본 threshold(5)는 단일 키워드 매칭(예: "meta ai" 4점)만으로는 못 넘어서
+  # 소스별 override로 4로 낮춤 (trade=3보다는 엄격하게, 그래도 노이즈는 거른다).
+  - name: Meta Newsroom
+    feed_url: https://about.fb.com/news/feed/
+    tier: broad
+    threshold: 4
+    source_type: official
+
+  - name: TechCrunch AI
+    feed_url: https://techcrunch.com/category/artificial-intelligence/feed/
+    tier: broad
+    threshold: 4
+    source_type: trade
+
+  - name: The Verge AI
+    feed_url: https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
+    tier: broad
+    threshold: 4
+    source_type: trade

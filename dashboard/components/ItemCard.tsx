@@ -5,6 +5,7 @@ import CopyButton from "./CopyButton";
 import AnthropicIcon from "./icons/AnthropicIcon";
 import BingIcon from "./icons/BingIcon";
 import GoogleIcon from "./icons/GoogleIcon";
+import MetaIcon from "./icons/MetaIcon";
 import OpenAiIcon from "./icons/OpenAiIcon";
 import RedditIcon from "./icons/RedditIcon";
 import { getScoreBand } from "@/lib/score";
@@ -16,9 +17,11 @@ const SOURCE_ICONS: Record<string, ReactNode> = {
   "Reddit r/SEO": <RedditIcon />,
   "Google Search Central Blog": <GoogleIcon />,
   "Google Search Product Blog": <GoogleIcon />,
+  "Google DeepMind Blog": <GoogleIcon />,
   "OpenAI News": <OpenAiIcon />,
   "Anthropic News": <AnthropicIcon />,
   "Bing Webmaster Blog": <BingIcon />,
+  "Meta Newsroom": <MetaIcon />,
 };
 
 /** 공식/매체는 "기본값"이라 눈에 덜 띄는 회색으로, 커뮤니티(검증 안 된 개인 의견)만

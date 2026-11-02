@@ -214,6 +214,9 @@ def main():
         )
         return
 
+    # Power Automate 플로우의 'Teams에 카드 게시' 액션이 Adaptive Card 필드에
+    # @{triggerBody()}를 직접 참조하도록 구성되어 있다 (attachments로 감쌀 필요 없음 -
+    # 예전에 For_each_1로 attachments를 순회하던 구조였다가 삭제됨).
     payload = json.dumps(build_card(digest)).encode("utf-8")
     req = urllib.request.Request(
         webhook_url,

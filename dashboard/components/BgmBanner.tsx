@@ -70,7 +70,7 @@ export default function BgmBanner() {
 
   return (
     <div className="flex items-center gap-2 rounded-lg bg-neutral-100 px-2 py-1.5 dark:bg-neutral-800">
-      <audio ref={audioRef} src="/Always.mp3" loop muted autoPlay />
+      <audio ref={audioRef} src="/api/bgm" loop muted autoPlay />
       <button
         type="button"
         onClick={toggleMute}

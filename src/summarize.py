@@ -31,7 +31,7 @@ DIGEST_MODEL = "claude-sonnet-5"
 PER_ITEM_SYSTEM = """당신은 GEO/SEO 컨설팅 팀을 위한 리서치 어시스턴트입니다.
 주어진 글의 제목과 원문 요약만 보고 아래 JSON 형식으로만 답하세요. 다른 텍스트는 출력하지 마세요.
 
-{"relevant": true|false, "summary": "핵심 사실 3개 (줄바꿈으로 구분, 한글)", "cluster": "주제 분류 (한글, 1~3단어)", "insight": "컨설턴트가 클라이언트에게 전달할 실무 시사점 (한글, 1~2문장)"}
+{"relevant": true|false, "summary": "핵심 사실 3개 (줄바꿈으로 구분, 한글)", "summary_en": "summary와 동일한 내용의 영문 버전 (불릿 3개, 줄바꿈 구분)", "cluster": "주제 분류 (한글, 1~3단어)", "cluster_en": "cluster의 영문 버전 (1~3단어)", "insight": "컨설턴트가 클라이언트에게 전달할 실무 시사점 (한글, 1~2문장)", "insight_en": "insight의 영문 버전 (1~2문장)"}
 
 - relevant: 아래 둘 중 하나에 해당하면 true.
   1) GEO(생성형 검색 최적화)/SEO 트렌드와 직접 관련
@@ -41,13 +41,14 @@ PER_ITEM_SYSTEM = """당신은 GEO/SEO 컨설팅 팀을 위한 리서치 어시�
   단순 홍보/채용/이벤트 공지, 검색·콘텐츠 발견과 무관한 기업 내부 정책(데이터센터 계약, 사내
   안전 평가 절차 등)처럼 트렌드성이 없으면 false.
 - summary: 완전한 문단이 아니라 고객에게 바로 공유할 수 있는 **불릿 3개**. 각 줄은 한 문장, 15단어 이내로 핵심 사실만 담고 수식어·중복 설명은 뺄 것. 원문을 안 읽어도 핵심을 이해할 수 있어야 함.
-- insight: 뻔한 요약 반복이 아니라 "그래서 클라이언트에게 뭘 해야 하는가" 관점."""
+- insight: 뻔한 요약 반복이 아니라 "그래서 클라이언트에게 뭘 해야 하는가" 관점.
+- *_en 필드는 한글 필드와 같은 의미를 전달하는 자연스러운 영어 버전이지, 직역이 아니다."""
 
 DIGEST_SYSTEM = """당신은 GEO/SEO 트렌드 주간 다이제스트를 만드는 편집자입니다.
 아래는 이번 주 수집된 글 목록(id·주제·요약·시사점)입니다.
 가장 중요한 3~5개를 헤드라인으로 선정하고, 아래 JSON 형식으로만 답하세요.
 
-{"headline_ids": [<int>, ...], "key_updates": [{"text": "...", "item_ids": [<int>, ...]}, ...]}
+{"headline_ids": [<int>, ...], "key_updates": [{"text": "...", "text_en": "...", "item_ids": [<int>, ...]}, ...]}
 
 - key_updates: "이번 주 꼭 알아야 할 사항"만 엄선. LLM/AI 모델 신규 출시·업데이트, 검색엔진의
   공식 알고리즘 업데이트 발표, 확인된 대규모 순위 변동성처럼 실무에 직접 영향을 주는 사실만
@@ -56,6 +57,7 @@ DIGEST_SYSTEM = """당신은 GEO/SEO 트렌드 주간 다이제스트를 만드�
   해당하는 게 없으면 반드시 빈 배열([])로 둘 것 - 항목 수를 채우려고 억지로 넣지 말 것.
   각 항목은 20단어 이내, **서술형 완성 문장이 아니라 명사형으로 끝내는 개조식**으로 쓸 것
   (예: "~검토 중이다" 대신 "~검토 중", "~둔화됐다" 대신 "~둔화").
+- text_en: text와 같은 의미의 영문 버전 (자연스러운 영어 개조식, 직역 아님).
 - item_ids: 그 항목의 근거가 된 글 id를 1개 이상 반드시 포함 (위 목록에 실제로 있는 id만 사용,
   지어내지 말 것)."""
 
@@ -63,17 +65,24 @@ CATEGORY_INSIGHTS_SYSTEM = """당신은 GEO/SEO 트렌드 리포트의 섹션 �
 아래는 이번 주 다이제스트를 그룹(대분류)별로 나눈 글 목록입니다 (한 글이 여러 그룹에 속할 수 있음).
 각 그룹마다 그 글들을 종합해 핵심 사실 2~3개를 불릿으로 작성하세요 (줄바꿈으로 구분, 한글, 각 줄 20단어 이내).
 완전한 문단이 아니라 간결한 사실 나열이어야 합니다. 글이 없는 그룹은 결과에서 제외하세요.
+각 그룹마다 같은 내용의 영문 버전도 같이 작성하세요 (자연스러운 영어, 직역 아님).
 
-JSON으로만 답하세요: {"category_insights": {"<그룹명>": "불릿 2~3개 (줄바꿈 구분)", ...}}"""
+JSON으로만 답하세요:
+{"category_insights": {"<그룹명>": "불릿 2~3개 (줄바꿈 구분)", ...},
+ "category_insights_en": {"<그룹명>": "English bullets 2-3 (줄바꿈 구분)", ...}}
+
+category_insights_en의 키(그룹명)는 category_insights와 완전히 동일한 한글 그룹명을 그대로 써야 합니다
+(영어로 번역하지 말 것 - 값만 영문이고 키는 한글 그대로)."""
 
 CLUSTER_SYSTEM = """당신은 GEO/SEO 트렌드 리포트의 편집자입니다.
 아래는 이번 주 관련 글 전체 목록(id·제목·요약)입니다.
 서로 비슷한 주제의 글들을 묶을 수 있는 소제목(클러스터) 5~10개를 정의하고, 모든 글을 그중 하나에 배정하세요.
 
 - 내용이 비슷한 글은 반드시 같은 클러스터로 묶어서, 거의 같은 뜻의 소제목이 여러 개 생기지 않게 하세요.
-- 소제목은 한글 2~5단어로 간결하게.
+- 소제목은 한글 2~5단어로 간결하게. 같은 의미의 영문 버전(2~5단어)도 같이 정하세요.
+- 같은 클러스터로 묶인 글은 전부 동일한 ko/en 쌍을 가져야 합니다.
 
-JSON으로만 답하세요: {"assignments": {"<id>": "<클러스터명>", ...}}"""
+JSON으로만 답하세요: {"assignments": {"<id>": {"ko": "<클러스터명>", "en": "<English label>"}, ...}}"""
 
 
 def extract_text(response):
@@ -127,7 +136,7 @@ def build_category_insights(client, items):
             by_category.setdefault(category, []).append(item)
 
     if not by_category:
-        return {}
+        return {}, {}
 
     sections = []
     for category, cat_items in by_category.items():
@@ -141,7 +150,7 @@ def build_category_insights(client, items):
         messages=[{"role": "user", "content": "\n\n".join(sections)}],
     )
     result = parse_json_response(resp)
-    return result.get("category_insights", {})
+    return result.get("category_insights", {}), result.get("category_insights_en", {})
 
 
 def build_clusters(client, items):
@@ -202,7 +211,13 @@ def main():
         item["summary"] = result.get("summary")
         item["cluster"] = result.get("cluster")
         item["insight"] = result.get("insight")
-        update_item_summary(item["id"], item["summary"], item["cluster"], item["insight"], item["relevant"])
+        item["summary_en"] = result.get("summary_en")
+        item["cluster_en"] = result.get("cluster_en")
+        item["insight_en"] = result.get("insight_en")
+        update_item_summary(
+            item["id"], item["summary"], item["cluster"], item["insight"], item["relevant"],
+            item["summary_en"], item["cluster_en"], item["insight_en"],
+        )
         mark = "O" if item["relevant"] else "X"
         print(f"[{mark}] ({item['cluster']}) {item['title'][:60]}")
 
@@ -218,12 +233,16 @@ def main():
         return
 
     cluster_assignments = build_clusters(client, digest_candidates)
-    print(f"\n재클러스터링: {len(set(cluster_assignments.values()))}개 소제목으로 정리")
+    print(f"\n재클러스터링: {len(set(a['ko'] for a in cluster_assignments.values()))}개 소제목으로 정리")
     for item in digest_candidates:
-        new_cluster = cluster_assignments.get(item["id"])
+        assignment = cluster_assignments.get(item["id"])
+        if not assignment:
+            continue
+        new_cluster, new_cluster_en = assignment.get("ko"), assignment.get("en")
         if new_cluster and new_cluster != item.get("cluster"):
             item["cluster"] = new_cluster
-            update_item_cluster(item["id"], new_cluster)
+            item["cluster_en"] = new_cluster_en
+            update_item_cluster(item["id"], new_cluster, new_cluster_en)
 
     digest = build_digest(client, digest_candidates)
     week_label = compute_week_label(digest_candidates)
@@ -236,14 +255,24 @@ def main():
     # 기준만 바꿈. theme은 더 이상 생성하지 않아 None으로 저장.
     valid_ids = {item["id"] for item in digest_candidates}
     key_updates = [
-        {"text": p["text"], "item_ids": [i for i in p.get("item_ids", []) if i in valid_ids]}
+        {
+            "text": p["text"],
+            "text_en": p.get("text_en"),
+            "item_ids": [i for i in p.get("item_ids", []) if i in valid_ids],
+        }
         for p in digest.get("key_updates", [])
         if p.get("text")
     ]
     overview = "\n".join(f"- {p['text']}" for p in key_updates)
+    overview_en = "\n".join(f"- {p['text_en']}" for p in key_updates if p.get("text_en"))
 
-    category_insights = build_category_insights(client, digest_candidates)
-    upsert_digest(week_label, headline_ids, overview, category_insights, key_updates, theme=None)
+    category_insights, category_insights_en = build_category_insights(client, digest_candidates)
+    # overview_points(=key_updates)는 불릿마다 text/text_en을 같이 담고 있어서
+    # overview_points_en을 따로 둘 필요 없음 (프론트가 locale에 따라 text/text_en 중 선택).
+    upsert_digest(
+        week_label, headline_ids, overview, category_insights, key_updates, theme=None,
+        overview_en=overview_en, category_insights_en=category_insights_en,
+    )
 
     by_id = {item["id"]: item for item in items}
     print(f"\n=== {week_label} 다이제스트 ===")

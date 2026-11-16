@@ -61,28 +61,58 @@ def upsert_items(items):
 
 
 def fetch_all_items():
-    resp = get_client().table("items").select("*").execute()
-    return resp.data
+    """PostgREST 기본 응답 한도(최대 1000행)에 걸리면 조용히 일부가 잘려나가 다이제스트
+    빌드/요약/번역 대상에서 누락된다 (실제로 1029건 중 29건이 이렇게 빠졌었음) - 페이지
+    단위로 끝까지 읽어온다."""
+    client = get_client()
+    page_size = 1000
+    all_rows = []
+    start = 0
+    while True:
+        resp = (
+            client.table("items")
+            .select("*")
+            .range(start, start + page_size - 1)
+            .execute()
+        )
+        rows = resp.data
+        all_rows.extend(rows)
+        if len(rows) < page_size:
+            break
+        start += page_size
+    return all_rows
 
 
-def update_item_summary(item_id, summary, cluster, insight, relevant):
+def update_item_summary(
+    item_id, summary, cluster, insight, relevant,
+    summary_en=None, cluster_en=None, insight_en=None,
+):
     get_client().table("items").update({
         "summary": summary,
         "cluster": cluster,
         "insight": insight,
         "relevant": relevant,
+        "summary_en": summary_en,
+        "cluster_en": cluster_en,
+        "insight_en": insight_en,
     }).eq("id", item_id).execute()
 
 
-def update_item_cluster(item_id, cluster):
-    get_client().table("items").update({"cluster": cluster}).eq("id", item_id).execute()
+def update_item_cluster(item_id, cluster, cluster_en=None):
+    get_client().table("items").update(
+        {"cluster": cluster, "cluster_en": cluster_en}
+    ).eq("id", item_id).execute()
 
 
-def upsert_digest(week, headline_item_ids, overview, category_insights=None, overview_points=None, theme=None):
+def upsert_digest(
+    week, headline_item_ids, overview, category_insights=None, overview_points=None, theme=None,
+    overview_en=None, category_insights_en=None, overview_points_en=None, theme_en=None,
+):
     """week UNIQUE 제약 기반 upsert. 같은 주에 여러 번 실행돼도 digests에 중복 행이 쌓이지 않는다.
     overview_points: [{"text": str, "item_ids": [int, ...]}, ...] - 대시보드가 불릿마다 근거 글
     링크를 보여줄 때 씀. overview(평문)는 이 필드가 없는 예전 소비자를 위한 폴백으로 계속 채움.
-    theme: 이번 주를 관통하는 한 문장 요약."""
+    theme: 이번 주를 관통하는 한 문장 요약.
+    *_en: 위 필드들의 영문 버전 (영어 대시보드용)."""
     get_client().table("digests").upsert({
         "week": week,
         "headline_items": headline_item_ids,
@@ -90,6 +120,10 @@ def upsert_digest(week, headline_item_ids, overview, category_insights=None, ove
         "category_insights": category_insights or {},
         "overview_points": overview_points or [],
         "theme": theme,
+        "overview_en": overview_en,
+        "category_insights_en": category_insights_en or {},
+        "overview_points_en": overview_points_en or [],
+        "theme_en": theme_en,
     }, on_conflict="week").execute()
 
 

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import DigestView from "@/components/DigestView";
 import GroupSummarySidebar from "@/components/GroupSummarySidebar";
 import WeekSidebar from "@/components/WeekSidebar";
+import { getLocale } from "@/lib/i18n-server";
 import { getAllDigestWeeks, getDigestByWeek } from "@/lib/queries";
 
 export default async function WeekPage({
@@ -11,9 +12,10 @@ export default async function WeekPage({
   params: Promise<{ week: string }>;
 }) {
   const { week } = await params;
-  const [digest, weeks] = await Promise.all([
+  const [digest, weeks, locale] = await Promise.all([
     getDigestByWeek(week),
     getAllDigestWeeks(),
+    getLocale(),
   ]);
 
   if (!digest) {
@@ -25,16 +27,16 @@ export default async function WeekPage({
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[200px_minmax(0,1fr)_200px]">
       <aside className="hidden lg:block">
-        <WeekSidebar currentWeek={digest.week} />
+        <WeekSidebar currentWeek={digest.week} locale={locale} />
       </aside>
 
       <div className="min-w-0">
-        <DigestView digest={digest} />
+        <DigestView digest={digest} locale={locale} />
 
         {otherWeeks.length > 0 && (
           <section className="mt-10 border-t border-neutral-200 pt-6 lg:hidden dark:border-neutral-800">
             <h2 className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">
-              다른 주차 보기
+              {locale === "en" ? "Other Weeks" : "다른 주차 보기"}
             </h2>
             <ul className="mt-2 flex flex-wrap gap-2">
               {otherWeeks.map((w) => (
@@ -53,7 +55,7 @@ export default async function WeekPage({
       </div>
 
       <aside className="hidden lg:block">
-        <GroupSummarySidebar week={digest.week} />
+        <GroupSummarySidebar week={digest.week} locale={locale} />
       </aside>
     </div>
   );

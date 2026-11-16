@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { categoryLabel, t, type Locale } from "@/lib/i18n";
 import { itemWeekLabel } from "@/lib/stats";
 import type { Item } from "@/lib/types";
 import ItemCard from "./ItemCard";
@@ -42,7 +43,7 @@ function sortTs(item: Item): number {
   return ts ? new Date(ts).getTime() : 0;
 }
 
-export default function GlobalSearch({ items }: { items: Item[] }) {
+export default function GlobalSearch({ items, locale }: { items: Item[]; locale: Locale }) {
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState(ALL_TAB);
   const [sourceFilter, setSourceFilter] = useState(ALL_SOURCES);
@@ -98,7 +99,8 @@ export default function GlobalSearch({ items }: { items: Item[] }) {
       : rangeFilteredItems.filter(
           (item) =>
             item.title.toLowerCase().includes(q) ||
-            (item.summary ?? "").toLowerCase().includes(q)
+            (item.summary ?? "").toLowerCase().includes(q) ||
+            (item.summary_en ?? "").toLowerCase().includes(q)
         );
     // items는 이미 relevance_score desc로 정렬돼서 넘어오니(getAllItemsForSearch),
     // "관련도순"은 그대로 두고 "최신순"일 때만 재정렬한다.
@@ -130,7 +132,7 @@ export default function GlobalSearch({ items }: { items: Item[] }) {
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="제목·요약 검색..."
+        placeholder={t(locale, "searchPlaceholder")}
         autoFocus
         className="w-full rounded-lg border border-neutral-300 bg-white px-4 py-3 text-base text-neutral-900 placeholder:text-neutral-400 focus:border-indigo-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
       />
@@ -151,7 +153,7 @@ export default function GlobalSearch({ items }: { items: Item[] }) {
                 : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
             }`}
           >
-            {tab}
+            {tab === ALL_TAB ? t(locale, "allTab") : categoryLabel(locale, tab)}
             {tab !== ALL_TAB && (
               <span className="ml-1.5 opacity-70">{categoryCounts.get(tab)}</span>
             )}
@@ -163,7 +165,7 @@ export default function GlobalSearch({ items }: { items: Item[] }) {
         <aside className="space-y-5 text-sm lg:sticky lg:top-4 lg:self-start">
           <div>
             <h3 className="text-xs font-semibold tracking-wide text-neutral-400 uppercase dark:text-neutral-500">
-              소스
+              {t(locale, "sourceLabel")}
             </h3>
             <select
               value={sourceFilter}
@@ -172,7 +174,7 @@ export default function GlobalSearch({ items }: { items: Item[] }) {
             >
               {sources.map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {s === ALL_SOURCES ? t(locale, "allSources") : s}
                 </option>
               ))}
             </select>
@@ -180,13 +182,13 @@ export default function GlobalSearch({ items }: { items: Item[] }) {
 
           <div>
             <h3 className="text-xs font-semibold tracking-wide text-neutral-400 uppercase dark:text-neutral-500">
-              정렬
+              {t(locale, "sortLabel")}
             </h3>
             <div className="mt-2 flex gap-1 rounded-md bg-neutral-100 p-1 dark:bg-neutral-800">
               {(
                 [
-                  ["relevance", "관련도순"],
-                  ["recent", "최신순"],
+                  ["relevance", t(locale, "sortRelevance")],
+                  ["recent", t(locale, "sortRecent")],
                 ] as const
               ).map(([value, label]) => (
                 <button
@@ -207,7 +209,7 @@ export default function GlobalSearch({ items }: { items: Item[] }) {
 
           <div>
             <h3 className="text-xs font-semibold tracking-wide text-neutral-400 uppercase dark:text-neutral-500">
-              기간
+              {t(locale, "period")}
             </h3>
             <div className="mt-2 space-y-1.5">
               <input
@@ -231,7 +233,7 @@ export default function GlobalSearch({ items }: { items: Item[] }) {
                   }}
                   className="text-xs text-neutral-400 underline-offset-2 hover:underline dark:text-neutral-500"
                 >
-                  초기화
+                  {t(locale, "reset")}
                 </button>
               )}
             </div>
@@ -240,11 +242,12 @@ export default function GlobalSearch({ items }: { items: Item[] }) {
 
         <div className="min-w-0">
           {results.length === 0 ? (
-            <p className="text-neutral-500 dark:text-neutral-400">검색 결과가 없습니다.</p>
+            <p className="text-neutral-500 dark:text-neutral-400">{t(locale, "noResults")}</p>
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                {results.length}건
+                {results.length}
+                {t(locale, "itemsCountSuffix")}
               </p>
               {pagedResults.map((item) => {
                 const week = itemWeekLabel(item);
@@ -258,7 +261,7 @@ export default function GlobalSearch({ items }: { items: Item[] }) {
                         {week}
                       </Link>
                     )}
-                    <ItemCard item={item} />
+                    <ItemCard item={item} locale={locale} />
                   </div>
                 );
               })}
@@ -270,7 +273,7 @@ export default function GlobalSearch({ items }: { items: Item[] }) {
                     onClick={() => setPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
                     className="rounded-md px-2.5 py-1.5 text-sm text-neutral-500 hover:bg-neutral-100 disabled:opacity-30 disabled:hover:bg-transparent dark:text-neutral-400 dark:hover:bg-neutral-800"
-                    aria-label="이전 페이지"
+                    aria-label={t(locale, "prevPage")}
                   >
                     ‹
                   </button>
@@ -302,7 +305,7 @@ export default function GlobalSearch({ items }: { items: Item[] }) {
                     onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
                     className="rounded-md px-2.5 py-1.5 text-sm text-neutral-500 hover:bg-neutral-100 disabled:opacity-30 disabled:hover:bg-transparent dark:text-neutral-400 dark:hover:bg-neutral-800"
-                    aria-label="다음 페이지"
+                    aria-label={t(locale, "nextPage")}
                   >
                     ›
                   </button>

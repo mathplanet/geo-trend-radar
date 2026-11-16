@@ -1,7 +1,15 @@
+import type { Locale } from "@/lib/i18n";
+import { categoryLabel, t } from "@/lib/i18n";
 import { getItemsForWeek } from "@/lib/queries";
 import { CATEGORY_ORDER, getCategoryColor } from "@/lib/stats";
 
-export default async function GroupSummarySidebar({ week }: { week: string }) {
+export default async function GroupSummarySidebar({
+  week,
+  locale,
+}: {
+  week: string;
+  locale: Locale;
+}) {
   const items = await getItemsForWeek(week);
 
   const counts = new Map<string, number>();
@@ -17,7 +25,7 @@ export default async function GroupSummarySidebar({ week }: { week: string }) {
   return (
     <div className="text-sm">
       <h2 className="text-xs font-semibold tracking-wide text-neutral-400 uppercase dark:text-neutral-500">
-        그룹별 현황
+        {t(locale, "groupStatusHeading")}
       </h2>
       <ul className="mt-2 space-y-1.5">
         {ordered.map((cat) => (
@@ -27,7 +35,7 @@ export default async function GroupSummarySidebar({ week }: { week: string }) {
                 className="h-2 w-2 shrink-0 rounded-sm"
                 style={{ backgroundColor: getCategoryColor(cat).light }}
               />
-              <span className="truncate">{cat}</span>
+              <span className="truncate">{categoryLabel(locale, cat)}</span>
             </span>
             <span className="shrink-0 tabular-nums text-neutral-400 dark:text-neutral-500">
               {counts.get(cat)}

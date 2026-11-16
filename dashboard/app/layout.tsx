@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import BgmBanner from "@/components/BgmBanner";
+import LocaleToggle from "@/components/LocaleToggle";
 import NavLinks from "@/components/NavLinks";
+import { t } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,14 +23,16 @@ export const metadata: Metadata = {
   description: "GEO/SEO 트렌드 주간 다이제스트",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
     <html
-      lang="ko"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
@@ -38,11 +43,12 @@ export default function RootLayout({
                 GEO Trend Radar
               </Link>
               <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                GEO/SEO 트렌드 주간 다이제스트
+                {t(locale, "headerSubtitle")}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <NavLinks />
+              <NavLinks locale={locale} />
+              <LocaleToggle locale={locale} />
               <BgmBanner />
             </div>
           </div>

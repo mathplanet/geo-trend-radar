@@ -1,7 +1,15 @@
 import Link from "next/link";
+import type { Locale } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 import { formatWeekRange, getAllDigestWeeks, getItemsForWeek } from "@/lib/queries";
 
-export default async function WeekSidebar({ currentWeek }: { currentWeek: string }) {
+export default async function WeekSidebar({
+  currentWeek,
+  locale,
+}: {
+  currentWeek: string;
+  locale: Locale;
+}) {
   const weeks = await getAllDigestWeeks();
   const items = await getItemsForWeek(currentWeek);
   const latestWeek = weeks[0];
@@ -10,7 +18,7 @@ export default async function WeekSidebar({ currentWeek }: { currentWeek: string
     <div className="space-y-8 text-sm">
       <div>
         <h2 className="text-xs font-semibold tracking-wide text-neutral-400 uppercase dark:text-neutral-500">
-          주차별 보기
+          {t(locale, "weeklyViewHeading")}
         </h2>
         <ul className="mt-2 space-y-1">
           {weeks.map((week) => {
@@ -38,13 +46,15 @@ export default async function WeekSidebar({ currentWeek }: { currentWeek: string
 
       <div>
         <h2 className="text-xs font-semibold tracking-wide text-neutral-400 uppercase dark:text-neutral-500">
-          이번 주 요약
+          {t(locale, "weekSummaryHeading")}
         </h2>
         <p className="mt-2">
           <span className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
             {items.length}
           </span>
-          <span className="ml-1 text-neutral-400 dark:text-neutral-500">건 수집</span>
+          <span className="ml-1 text-neutral-400 dark:text-neutral-500">
+            {t(locale, "collectedCountSuffix")}
+          </span>
         </p>
       </div>
     </div>

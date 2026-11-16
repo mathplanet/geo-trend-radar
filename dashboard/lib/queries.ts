@@ -65,16 +65,41 @@ export async function getAllDigestWeeks(): Promise<string[]> {
  * summary가 없는 글(격일 수집은 계속 도는데 요약은 주 1회 배치라, 다음 배치 전까지 그 사이
  * 수집된 글은 아직 요약 전)은 제외한다 - 안 그러면 클러스터도 없어서 다이제스트 화면에
  * "미분류"로 어중간하게 섞여 보임. */
+/** PostgREST 기본 응답 한도(최대 1000행)에 걸리면 조용히 일부 행이 잘려나간다
+ * (실제로 items 1029건 중 29건이 이렇게 빠져 검색/통계/주간 조회에서 누락됐었음).
+ * select("*")는 범위를 넘는 페이지에서도 매번 전체 폭을 다시 긁어오니 데이터량이 커지면
+ * 비효율적이지만, 지금 규모(수천 행)에서는 무시 가능한 수준이고 누락보다는 훨씬 낫다. */
+const PAGE_SIZE = 1000;
+
+async function fetchAllRows<T>(
+  pageFetch: (from: number, to: number) => PromiseLike<{ data: T[] | null }>
+): Promise<T[]> {
+  const all: T[] = [];
+  let start = 0;
+  for (;;) {
+    const { data } = await pageFetch(start, start + PAGE_SIZE - 1);
+    const rows = data ?? [];
+    all.push(...rows);
+    if (rows.length < PAGE_SIZE) break;
+    start += PAGE_SIZE;
+  }
+  return all;
+}
+
 export const getItemsForWeek = cache(async (week: string): Promise<Item[]> => {
   const { start, end } = isoWeekToRange(week);
-  const { data } = await supabase
-    .from("items")
-    .select("*")
-    .or(`relevant.is.null,relevant.eq.true`)
-    .not("summary", "is", null)
-    .order("relevance_score", { ascending: false });
+  const data = await fetchAllRows<Item>((from, to) =>
+    supabase
+      .from("items")
+      .select("*")
+      .or(`relevant.is.null,relevant.eq.true`)
+      .not("summary", "is", null)
+      .order("relevance_score", { ascending: false })
+      .order("id", { ascending: true })
+      .range(from, to)
+  );
 
-  return (data ?? []).filter((item) => {
+  return data.filter((item) => {
     const ts = item.published_at ?? item.collected_at;
     if (!ts) return false;
     const date = new Date(ts);
@@ -86,22 +111,28 @@ export const getItemsForWeek = cache(async (week: string): Promise<Item[]> => {
  * 필요해서(다른 화면과 달리) 여기서는 필터링하지 않는다 - "노이즈 제외"가 필요한 집계
  * (카테고리별 차트 등)는 lib/stats.ts의 각 aggregate 함수가 알아서 걸러낸다. */
 export async function getAllItemsForStats(): Promise<StatsItem[]> {
-  const { data } = await supabase
-    .from("items")
-    .select(
-      "collected_at, published_at, categories, source, tier, relevance_score, relevant, matched_keywords, cluster"
-    );
-  return data ?? [];
+  return fetchAllRows<StatsItem>((from, to) =>
+    supabase
+      .from("items")
+      .select(
+        "id, collected_at, published_at, categories, source, tier, relevance_score, relevant, matched_keywords, cluster"
+      )
+      .order("id", { ascending: true })
+      .range(from, to)
+  );
 }
 
 /** 전역 검색용 전체 items (주차 제한 없이 전 기간 대상). */
 export async function getAllItemsForSearch(): Promise<Item[]> {
-  const { data } = await supabase
-    .from("items")
-    .select("*")
-    .or(`relevant.is.null,relevant.eq.true`)
-    .order("relevance_score", { ascending: false });
-  return data ?? [];
+  return fetchAllRows<Item>((from, to) =>
+    supabase
+      .from("items")
+      .select("*")
+      .or(`relevant.is.null,relevant.eq.true`)
+      .order("relevance_score", { ascending: false })
+      .order("id", { ascending: true })
+      .range(from, to)
+  );
 }
 
 /** '요청' 탭용 전체 요청 목록. 등록/상태변경은 클라이언트(RequestBoard)가 anon 키로 직접 처리. */

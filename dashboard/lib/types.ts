@@ -13,6 +13,9 @@ export type Item = {
   summary: string | null;
   cluster: string | null;
   insight: string | null;
+  summary_en: string | null;
+  cluster_en: string | null;
+  insight_en: string | null;
   collected_at: string | null;
   relevant: boolean | null;
   categories: string[] | null;
@@ -20,6 +23,7 @@ export type Item = {
 
 export type OverviewPoint = {
   text: string;
+  text_en?: string | null;
   item_ids: number[];
 };
 
@@ -31,6 +35,9 @@ export type Digest = {
   overview_points: OverviewPoint[] | null;
   theme: string | null;
   category_insights: Record<string, string> | null;
+  overview_en: string | null;
+  category_insights_en: Record<string, string> | null;
+  theme_en: string | null;
   created_at: string;
 };
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { categoryLabel, pick, t, type Locale } from "@/lib/i18n";
 import type { Item } from "@/lib/types";
 import BulletList from "./BulletList";
 import ItemCard from "./ItemCard";
@@ -17,9 +18,13 @@ function dateKey(item: Item): string | null {
 export default function CategoryExplorer({
   items,
   categoryInsights,
+  categoryInsightsEn,
+  locale,
 }: {
   items: Item[];
   categoryInsights: Record<string, string> | null;
+  categoryInsightsEn?: Record<string, string> | null;
+  locale: Locale;
 }) {
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState(ALL_TAB);
@@ -60,21 +65,25 @@ export default function CategoryExplorer({
     return dateFilteredItems.filter(
       (item) =>
         item.title.toLowerCase().includes(q) ||
-        (item.summary ?? "").toLowerCase().includes(q)
+        (item.summary ?? "").toLowerCase().includes(q) ||
+        (item.summary_en ?? "").toLowerCase().includes(q)
     );
   }, [dateFilteredItems, query]);
 
   const clusters = useMemo(() => {
     const groups = new Map<string, Item[]>();
     for (const item of filteredItems) {
-      const key = item.cluster ?? "미분류";
+      const key = item.cluster ?? t(locale, "uncategorized");
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(item);
     }
     return groups;
-  }, [filteredItems]);
+  }, [filteredItems, locale]);
 
-  const activeInsight = activeTab !== ALL_TAB ? categoryInsights?.[activeTab] : null;
+  const activeInsight =
+    activeTab !== ALL_TAB
+      ? pick(locale, categoryInsights?.[activeTab], categoryInsightsEn?.[activeTab])
+      : null;
 
   return (
     <div>
@@ -82,7 +91,7 @@ export default function CategoryExplorer({
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="제목·요약 검색..."
+        placeholder={t(locale, "searchPlaceholder")}
         className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-indigo-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
       />
 
@@ -102,7 +111,7 @@ export default function CategoryExplorer({
                 : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
             }`}
           >
-            {tab}
+            {tab === ALL_TAB ? t(locale, "allTab") : categoryLabel(locale, tab)}
             {tab !== ALL_TAB && (
               <span className="ml-1.5 opacity-70">{categoryCounts.get(tab)}</span>
             )}
@@ -112,7 +121,7 @@ export default function CategoryExplorer({
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <label className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-          기간
+          {t(locale, "period")}
           <input
             type="date"
             value={rangeStart}
@@ -136,7 +145,7 @@ export default function CategoryExplorer({
             }}
             className="text-xs text-neutral-400 underline-offset-2 hover:underline dark:text-neutral-500"
           >
-            초기화
+            {t(locale, "reset")}
           </button>
         )}
       </div>
@@ -153,21 +162,22 @@ export default function CategoryExplorer({
           <section key={cluster}>
             <h3 className="flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
-              {cluster}
+              {pick(locale, cluster, clusterItems[0]?.cluster_en)}
               <span className="font-normal text-neutral-400 dark:text-neutral-500">
-                {clusterItems.length}건
+                {clusterItems.length}
+                {t(locale, "itemsCountSuffix")}
               </span>
             </h3>
             <div className="mt-3 space-y-3">
               {clusterItems.map((item) => (
-                <ItemCard key={item.id} item={item} />
+                <ItemCard key={item.id} item={item} locale={locale} />
               ))}
             </div>
           </section>
         ))}
 
         {filteredItems.length === 0 && (
-          <p className="text-neutral-500 dark:text-neutral-400">검색 결과가 없습니다.</p>
+          <p className="text-neutral-500 dark:text-neutral-400">{t(locale, "noResults")}</p>
         )}
       </div>
     </div>

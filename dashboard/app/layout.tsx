@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import BgmBanner from "@/components/BgmBanner";
 import NavLinks from "@/components/NavLinks";
 import "./globals.css";
 
@@ -40,7 +41,10 @@ export default function RootLayout({
                 GEO/SEO 트렌드 주간 다이제스트
               </p>
             </div>
-            <NavLinks />
+            <div className="flex items-center gap-3">
+              <NavLinks />
+              <BgmBanner />
+            </div>
           </div>
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">

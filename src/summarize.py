@@ -25,7 +25,7 @@ from store import (
     within_window,
 )
 
-PER_ITEM_MODEL = "claude-haiku-4-5-20251001"
+PER_ITEM_MODEL = "claude-haiku-5-5"
 DIGEST_MODEL = "claude-sonnet-5"
 
 PER_ITEM_SYSTEM = """당신은 GEO/SEO 컨설팅 팀을 위한 리서치 어시스턴트입니다.
@@ -103,10 +103,15 @@ def parse_json_response(response):
 
 
 def summarize_item(client, item):
+    # 영문 필드(summary_en/cluster_en/insight_en) 추가로 응답 길이가 늘어나면서
+    # max_tokens=500으로는 가끔 JSON이 중간에 잘렸다 ("Unterminated string" 파싱 에러,
+    # Haiku 5.5+thinking 꺼도 재현됨 - 모델 문제가 아니라 예산 부족). 여유 있게 늘림.
+    # thinking도 꺼서(단순 추출 작업이라 추론 불필요) 전체 예산이 JSON 응답에만 쓰이게 한다.
     user_content = f"제목: {item['title']}\n원문 요약: {item.get('raw_summary') or '(없음)'}"
     resp = client.messages.create(
         model=PER_ITEM_MODEL,
-        max_tokens=500,
+        max_tokens=1200,
+        thinking={"type": "disabled"},
         system=PER_ITEM_SYSTEM,
         messages=[{"role": "user", "content": user_content}],
     )

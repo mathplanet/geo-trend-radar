@@ -115,7 +115,7 @@ export async function getAllItemsForStats(): Promise<StatsItem[]> {
     supabase
       .from("items")
       .select(
-        "id, collected_at, published_at, categories, source, tier, relevance_score, relevant, matched_keywords, cluster"
+        "id, collected_at, published_at, categories, source, tier, relevance_score, relevant, matched_keywords, cluster, cluster_en"
       )
       .order("id", { ascending: true })
       .range(from, to)

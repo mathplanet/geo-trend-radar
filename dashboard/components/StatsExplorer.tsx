@@ -8,13 +8,20 @@ import {
   itemWeekLabel,
   type StatsItem,
 } from "@/lib/stats";
+import { t, type Locale } from "@/lib/i18n";
 import ClusterPersistenceList from "./ClusterPersistenceList";
 import KeywordTrendTable from "./KeywordTrendTable";
 import SourceStatsTable from "./SourceStatsTable";
 
 const ALL = "전체";
 
-export default function StatsExplorer({ items }: { items: StatsItem[] }) {
+export default function StatsExplorer({
+  items,
+  locale,
+}: {
+  items: StatsItem[];
+  locale: Locale;
+}) {
   const [selected, setSelected] = useState<string>(ALL);
 
   const weeks = useMemo(() => {
@@ -53,7 +60,7 @@ export default function StatsExplorer({ items }: { items: StatsItem[] }) {
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[160px_minmax(0,1fr)]">
       <aside>
         <h3 className="text-xs font-semibold tracking-wide text-neutral-400 uppercase dark:text-neutral-500">
-          기간
+          {t(locale, "period")}
         </h3>
         <ul className="mt-2 flex gap-1 overflow-x-auto lg:mt-3 lg:flex-col lg:overflow-visible">
           {[ALL, ...weeks].map((week) => {
@@ -69,7 +76,7 @@ export default function StatsExplorer({ items }: { items: StatsItem[] }) {
                       : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
                   }`}
                 >
-                  {week}
+                  {week === ALL ? t(locale, "allTab") : week}
                 </button>
               </li>
             );
@@ -80,40 +87,43 @@ export default function StatsExplorer({ items }: { items: StatsItem[] }) {
       <div className="min-w-0 space-y-12">
         <section>
           <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-            소스별 통계
+            {t(locale, "statsBySourceHeading")}
           </h2>
           <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            노이즈 비율은 Claude가 주간 배치에서 &ldquo;관련 없음&rdquo;으로 재평가한 글의
-            비중입니다. 높을수록 그 소스의 threshold를 다시 볼 필요가 있다는 신호예요.
+            {locale === "en"
+              ? "The noise rate is the share of items Claude re-judged as “not relevant” during the weekly batch. The higher it is, the more that source's threshold may need another look."
+              : "노이즈 비율은 Claude가 주간 배치에서 “관련 없음”으로 재평가한 글의 비중입니다. 높을수록 그 소스의 threshold를 다시 볼 필요가 있다는 신호예요."}
           </p>
           <div className="mt-4">
-            <SourceStatsTable stats={sourceStats} />
+            <SourceStatsTable stats={sourceStats} locale={locale} />
           </div>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-            키워드 트렌드
+            {t(locale, "statsKeywordTrendHeading")}
           </h2>
           <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            선택한 주차 기준 상위 키워드와, 직전 주 대비 증감입니다.
+            {locale === "en"
+              ? "Top keywords for the selected week, with change vs. the previous week."
+              : "선택한 주차 기준 상위 키워드와, 직전 주 대비 증감입니다."}
           </p>
           <div className="mt-4">
-            <KeywordTrendTable trend={keywordTrend} />
+            <KeywordTrendTable trend={keywordTrend} locale={locale} />
           </div>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-            지속되는 주제
+            {t(locale, "statsPersistentHeading")}
           </h2>
           <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            선택한 주차까지 2주 이상 반복 등장한 세부 주제(클러스터)입니다. 클러스터명은
-            매주 Claude가 그 주 글만 보고 새로 짓기 때문에, 같은 주제라도 표현이 달라지면
-            다른 주제로 잡힐 수 있어요(참고용 지표).
+            {locale === "en"
+              ? "Topics (clusters) that have reappeared for 2+ weeks up to the selected week. Cluster names are freshly coined by Claude each week from that week's items alone, so the same topic can land in a different cluster if the wording shifts (treat this as a reference signal)."
+              : "선택한 주차까지 2주 이상 반복 등장한 세부 주제(클러스터)입니다. 클러스터명은 매주 Claude가 그 주 글만 보고 새로 짓기 때문에, 같은 주제라도 표현이 달라지면 다른 주제로 잡힐 수 있어요(참고용 지표)."}
           </p>
           <div className="mt-4">
-            <ClusterPersistenceList clusters={persistentClusters} />
+            <ClusterPersistenceList clusters={persistentClusters} locale={locale} />
           </div>
         </section>
       </div>

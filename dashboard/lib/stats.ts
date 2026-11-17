@@ -11,6 +11,7 @@ export type StatsItem = Pick<
   | "relevant"
   | "matched_keywords"
   | "cluster"
+  | "cluster_en"
 >;
 
 /** relevant=false는 Claude가 주간 배치에서 "노이즈"로 재평가한 글. 아직 재평가 전(null)은
@@ -229,6 +230,7 @@ export function aggregateKeywordTrend(items: StatsItem[], limit = 15): KeywordTr
 
 export type ClusterPersistence = {
   cluster: string;
+  clusterEn: string | null;
   weeks: string[];
   weekCount: number;
   totalItems: number;
@@ -245,7 +247,10 @@ export function aggregateClusterPersistence(
   items: StatsItem[],
   minWeeks = 2
 ): ClusterPersistence[] {
-  const byCluster = new Map<string, { weeks: Set<string>; totalItems: number }>();
+  const byCluster = new Map<
+    string,
+    { weeks: Set<string>; totalItems: number; clusterEn: string | null }
+  >();
 
   for (const item of items) {
     if (!isNotNoise(item)) continue;
@@ -254,11 +259,12 @@ export function aggregateClusterPersistence(
     if (!ts) continue;
     const week = toIsoWeekLabel(new Date(ts));
     if (!byCluster.has(item.cluster)) {
-      byCluster.set(item.cluster, { weeks: new Set(), totalItems: 0 });
+      byCluster.set(item.cluster, { weeks: new Set(), totalItems: 0, clusterEn: null });
     }
     const entry = byCluster.get(item.cluster)!;
     entry.weeks.add(week);
     entry.totalItems += 1;
+    if (!entry.clusterEn && item.cluster_en) entry.clusterEn = item.cluster_en;
   }
 
   return [...byCluster.entries()]
@@ -266,6 +272,7 @@ export function aggregateClusterPersistence(
       const weeks = [...e.weeks].sort();
       return {
         cluster,
+        clusterEn: e.clusterEn,
         weeks,
         weekCount: weeks.length,
         totalItems: e.totalItems,

@@ -16,11 +16,11 @@ export default async function StatsPage() {
         {t(locale, "statsDescription")}
       </p>
       <div className="mt-8">
-        <StatsChart items={items} />
+        <StatsChart items={items} locale={locale} />
       </div>
 
       <div className="mt-12">
-        <StatsExplorer items={items} />
+        <StatsExplorer items={items} locale={locale} />
       </div>
     </div>
   );

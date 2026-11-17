@@ -9,6 +9,7 @@ import {
   type Granularity,
   type StatsItem,
 } from "@/lib/stats";
+import { categoryLabel, t, type Locale } from "@/lib/i18n";
 import CategoryTrendChart from "./CategoryTrendChart";
 
 const CHART_HEIGHT = 240;
@@ -34,7 +35,7 @@ function itemDay(item: StatsItem): string | null {
   return ts ? ts.slice(0, 10) : null;
 }
 
-export default function StatsChart({ items }: { items: StatsItem[] }) {
+export default function StatsChart({ items, locale }: { items: StatsItem[]; locale: Locale }) {
   const [granularity, setGranularity] = useState<Granularity>("week");
   const [view, setView] = useState<"chart" | "trend" | "table">("chart");
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
@@ -99,7 +100,7 @@ export default function StatsChart({ items }: { items: StatsItem[] }) {
                     : "text-neutral-500 dark:text-neutral-400"
                 }`}
               >
-                {g === "week" ? "주간" : "일별"}
+                {g === "week" ? t(locale, "statsGranularityWeek") : t(locale, "statsGranularityDay")}
               </button>
             ))}
           </div>
@@ -107,9 +108,9 @@ export default function StatsChart({ items }: { items: StatsItem[] }) {
         <div className="ml-auto flex gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800">
           {(
             [
-              ["chart", "막대"],
-              ["trend", "추세선"],
-              ["table", "표"],
+              ["chart", t(locale, "statsViewBar")],
+              ["trend", t(locale, "statsViewTrend")],
+              ["table", t(locale, "statsViewTable")],
             ] as const
           ).map(([v, label]) => (
             <button
@@ -130,7 +131,7 @@ export default function StatsChart({ items }: { items: StatsItem[] }) {
 
       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
         <label className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
-          기간
+          {t(locale, "period")}
           <input
             type="date"
             value={rangeStart}
@@ -154,36 +155,37 @@ export default function StatsChart({ items }: { items: StatsItem[] }) {
             }}
             className="text-neutral-400 underline-offset-2 hover:underline dark:text-neutral-500"
           >
-            초기화
+            {t(locale, "reset")}
           </button>
         )}
       </div>
 
       <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
-        한 글이 여러 그룹에 동시에 속할 수 있어(multi-tag), 막대 합계가 실제 수집 건수보다 클 수
-        있습니다.
+        {locale === "en"
+          ? "An item can belong to multiple groups at once (multi-tag), so bar totals can exceed the actual number of items collected."
+          : "한 글이 여러 그룹에 동시에 속할 수 있어(multi-tag), 막대 합계가 실제 수집 건수보다 클 수 있습니다."}
       </p>
 
       {view === "trend" ? (
         <div className="mt-4">
-          <CategoryTrendChart buckets={weekBuckets} />
+          <CategoryTrendChart buckets={weekBuckets} locale={locale} />
         </div>
       ) : buckets.length === 0 ? (
-        <p className="mt-6 text-neutral-500 dark:text-neutral-400">데이터가 없습니다.</p>
+        <p className="mt-6 text-neutral-500 dark:text-neutral-400">{t(locale, "noData")}</p>
       ) : view === "table" ? (
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[600px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-neutral-200 text-left text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
                 <th className="py-2 pr-4 font-medium">
-                  {granularity === "week" ? "주차" : "날짜"}
+                  {granularity === "week" ? t(locale, "statsTableWeekCol") : t(locale, "statsTableDateCol")}
                 </th>
                 {activeCategories.map((cat) => (
                   <th key={cat} className="py-2 pr-4 font-medium whitespace-nowrap">
-                    {cat}
+                    {categoryLabel(locale, cat)}
                   </th>
                 ))}
-                <th className="py-2 font-medium">합계</th>
+                <th className="py-2 font-medium">{t(locale, "statsTableTotalCol")}</th>
               </tr>
             </thead>
             <tbody>
@@ -252,7 +254,7 @@ export default function StatsChart({ items }: { items: StatsItem[] }) {
                               onFocus={(e) => showTooltip(e, bucket, cat)}
                               onMouseLeave={() => setTooltip(null)}
                               onBlur={() => setTooltip(null)}
-                              aria-label={`${bucket.label} ${cat} ${count}건`}
+                              aria-label={`${bucket.label} ${categoryLabel(locale, cat)} ${count}${t(locale, "itemsCountSuffix")}`}
                               className="mb-0.5 w-full shrink-0 transition-[filter] hover:brightness-110"
                               style={{
                                 height,
@@ -278,9 +280,9 @@ export default function StatsChart({ items }: { items: StatsItem[] }) {
               className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-neutral-900 px-3 py-2 text-xs whitespace-nowrap text-white shadow-lg dark:bg-neutral-100 dark:text-neutral-900"
               style={{ left: tooltip.x, top: tooltip.y - 8 }}
             >
-              <div className="font-semibold">{tooltip.count}건</div>
+              <div className="font-semibold">{tooltip.count}{t(locale, "itemsCountSuffix")}</div>
               <div className="text-neutral-300 dark:text-neutral-600">
-                {tooltip.category} · {tooltip.bucketLabel}
+                {categoryLabel(locale, tooltip.category)} · {tooltip.bucketLabel}
               </div>
             </div>
           )}
@@ -295,7 +297,7 @@ export default function StatsChart({ items }: { items: StatsItem[] }) {
                 className="h-2.5 w-2.5 shrink-0 rounded-sm"
                 style={{ backgroundColor: getCategoryColor(cat).light }}
               />
-              {cat}
+              {categoryLabel(locale, cat)}
             </li>
           ))}
         </ul>

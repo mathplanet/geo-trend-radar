@@ -26,7 +26,7 @@ from store import (
 )
 
 PER_ITEM_MODEL = "claude-haiku-5-5"
-DIGEST_MODEL = "claude-sonnet-5"
+DIGEST_MODEL = "claude-sonnet-5-5"
 
 PER_ITEM_SYSTEM = """당신은 GEO/SEO 컨설팅 팀을 위한 리서치 어시스턴트입니다.
 주어진 글의 제목과 원문 요약만 보고 아래 JSON 형식으로만 답하세요. 다른 텍스트는 출력하지 마세요.

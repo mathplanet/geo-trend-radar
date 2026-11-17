@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { getActiveCategories, getCategoryColor, type Bucket } from "@/lib/stats";
+import { categoryLabel, t, type Locale } from "@/lib/i18n";
 
 const CHART_HEIGHT = 240;
 const COLUMN_WIDTH = 64;
@@ -23,13 +24,19 @@ type Tooltip = {
 
 /** 카테고리별 주간 추이를 선 그래프로 - 막대 차트는 그 주만 훑기엔 좋지만, "몇 주째 커지고
  * 있다" 같은 흐름은 선으로 봐야 한눈에 들어온다. */
-export default function CategoryTrendChart({ buckets }: { buckets: Bucket[] }) {
+export default function CategoryTrendChart({
+  buckets,
+  locale,
+}: {
+  buckets: Bucket[];
+  locale: Locale;
+}) {
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const categories = getActiveCategories(buckets);
 
   if (buckets.length === 0) {
-    return <p className="text-neutral-500 dark:text-neutral-400">데이터가 없습니다.</p>;
+    return <p className="text-neutral-500 dark:text-neutral-400">{t(locale, "noData")}</p>;
   }
 
   const maxCount = niceMax(
@@ -109,7 +116,7 @@ export default function CategoryTrendChart({ buckets }: { buckets: Bucket[] }) {
                     onMouseLeave={() => setTooltip(null)}
                     onBlur={() => setTooltip(null)}
                     tabIndex={0}
-                    aria-label={`${b.label} ${category} ${b.counts[category] ?? 0}건`}
+                    aria-label={`${b.label} ${categoryLabel(locale, category)} ${b.counts[category] ?? 0}${t(locale, "itemsCountSuffix")}`}
                   />
                 ))
               )}
@@ -134,9 +141,9 @@ export default function CategoryTrendChart({ buckets }: { buckets: Bucket[] }) {
             className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-neutral-900 px-3 py-2 text-xs whitespace-nowrap text-white shadow-lg dark:bg-neutral-100 dark:text-neutral-900"
             style={{ left: tooltip.x, top: tooltip.y - 8 }}
           >
-            <div className="font-semibold">{tooltip.count}건</div>
+            <div className="font-semibold">{tooltip.count}{t(locale, "itemsCountSuffix")}</div>
             <div className="text-neutral-300 dark:text-neutral-600">
-              {tooltip.category} · {tooltip.bucketLabel}
+              {categoryLabel(locale, tooltip.category)} · {tooltip.bucketLabel}
             </div>
           </div>
         )}
@@ -150,7 +157,7 @@ export default function CategoryTrendChart({ buckets }: { buckets: Bucket[] }) {
                 className="h-2.5 w-2.5 shrink-0 rounded-sm"
                 style={{ backgroundColor: getCategoryColor(cat).light }}
               />
-              {cat}
+              {categoryLabel(locale, cat)}
             </li>
           ))}
         </ul>

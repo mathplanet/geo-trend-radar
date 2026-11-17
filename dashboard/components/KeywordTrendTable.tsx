@@ -1,4 +1,5 @@
 import type { KeywordTrend } from "@/lib/stats";
+import { t, type Locale } from "@/lib/i18n";
 
 function deltaLabel(delta: number, hasLastWeek: boolean): { text: string; className: string } {
   if (!hasLastWeek) {
@@ -13,16 +14,27 @@ function deltaLabel(delta: number, hasLastWeek: boolean): { text: string; classN
   return { text: "-", className: "text-neutral-400 dark:text-neutral-500" };
 }
 
-export default function KeywordTrendTable({ trend }: { trend: KeywordTrend }) {
+export default function KeywordTrendTable({
+  trend,
+  locale,
+}: {
+  trend: KeywordTrend;
+  locale: Locale;
+}) {
   if (trend.rows.length === 0) {
-    return <p className="text-neutral-500 dark:text-neutral-400">데이터가 없습니다.</p>;
+    return <p className="text-neutral-500 dark:text-neutral-400">{t(locale, "noData")}</p>;
   }
 
   return (
     <div>
       <p className="text-xs text-neutral-500 dark:text-neutral-400">
-        {trend.thisWeekLabel} 기준
-        {trend.lastWeekLabel && ` (직전 주 ${trend.lastWeekLabel} 대비 증감)`}
+        {locale === "en"
+          ? `As of ${trend.thisWeekLabel}`
+          : `${trend.thisWeekLabel} 기준`}
+        {trend.lastWeekLabel &&
+          (locale === "en"
+            ? ` (change vs. previous week ${trend.lastWeekLabel})`
+            : ` (직전 주 ${trend.lastWeekLabel} 대비 증감)`)}
       </p>
       <ul className="mt-3 space-y-1.5">
         {trend.rows.map((row, i) => {
@@ -39,7 +51,7 @@ export default function KeywordTrendTable({ trend }: { trend: KeywordTrend }) {
                 {row.keyword}
               </span>
               <span className="tabular-nums text-neutral-500 dark:text-neutral-400">
-                {row.thisWeek}건
+                {row.thisWeek}{t(locale, "itemsCountSuffix")}
               </span>
               <span className={`w-14 shrink-0 text-right text-xs tabular-nums ${delta.className}`}>
                 {delta.text}
